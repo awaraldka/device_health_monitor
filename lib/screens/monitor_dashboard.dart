@@ -225,7 +225,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
               ),
             ),
             Text(
-              'Real-time metrics for ${status.deviceName}',
+              'Metrics for ${status.deviceName}',
               style: TextStyle(color: Colors.grey[600]),
             ),
           ],
@@ -422,7 +422,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
             ),
             const Divider(height: 24),
 
-            /// 🔥 Top 5 apps only (optional)
             ...status.appData.map((app) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -470,7 +469,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

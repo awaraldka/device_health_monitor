@@ -28,7 +28,7 @@ class DeviceHealthMonitorApp extends StatelessWidget {
       darkTheme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: Colors.indigo,
-        brightness: Brightness.dark,
+        brightness: Brightness.light,
       ),
       builder: (context, child) {
         return ScrollConfiguration(

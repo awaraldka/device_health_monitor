@@ -1,48 +1,323 @@
+import 'dart:convert';
+import 'dart:io';
 import '../core/system_monitor.dart';
 
 class MacMonitor implements SystemMonitor {
-  @override
-  Future<int> getCpuUsage() async => 20;
 
+  /// ✅ CPU Usage
   @override
-  Future<int> getRamUsage() async => 40;
+  Future<int> getCpuUsage() async {
+    try {
+      final result = await Process.run('bash', [
+        '-c',
+        "top -l 1 | grep 'CPU usage'"
+      ]);
 
-  @override
-  Future<int> getDiskUsage() async => 50;
+      final output = result.stdout.toString();
 
-  @override
-  Future<Map<String, String>> getNetworkSpeed() {
-    // TODO: implement getNetworkSpeed
-    throw UnimplementedError();
+      final match = RegExp(r'(\d+\.\d+)% idle').firstMatch(output);
+
+      if (match != null) {
+        final idle = double.parse(match.group(1)!);
+        return (100 - idle).round().clamp(0, 100);
+      }
+
+      return 0;
+    } catch (_) {
+      return 0;
+    }
   }
 
+  /// ✅ RAM Usage
   @override
-  Future<bool> isCameraAvailable() {
-    // TODO: implement isCameraAvailable
-    throw UnimplementedError();
+  Future<int> getRamUsage() async {
+    try {
+      final result = await Process.run('bash', [
+        '-c',
+        "vm_stat"
+      ]);
+
+      final output = result.stdout.toString();
+
+      final pageSizeMatch =
+      RegExp(r'page size of (\d+) bytes').firstMatch(output);
+      final pageSize = int.parse(pageSizeMatch!.group(1)!);
+
+      final freeMatch = RegExp(r'Pages free:\s+(\d+)').firstMatch(output);
+      final activeMatch = RegExp(r'Pages active:\s+(\d+)').firstMatch(output);
+      final inactiveMatch = RegExp(r'Pages inactive:\s+(\d+)').firstMatch(output);
+      final wiredMatch = RegExp(r'Pages wired down:\s+(\d+)').firstMatch(output);
+
+      final free = int.parse(freeMatch!.group(1)!);
+      final used = int.parse(activeMatch!.group(1)!) +
+          int.parse(inactiveMatch!.group(1)!) +
+          int.parse(wiredMatch!.group(1)!);
+
+      final total = free + used;
+
+      return ((used / total) * 100).round();
+    } catch (_) {
+      return 0;
+    }
   }
 
+  /// ✅ Disk Usage
   @override
-  Future<bool> isMicAvailable() {
-    // TODO: implement isMicAvailable
-    throw UnimplementedError();
+  Future<int> getDiskUsage() async {
+    try {
+      final result = await Process.run('bash', ['-c', "df -h /"]);
+
+      final lines = result.stdout.toString().split('\n');
+      if (lines.length < 2) return 0;
+
+      final parts = lines[1].split(RegExp(r'\s+'));
+      return int.tryParse(parts[4].replaceAll('%', '')) ?? 0;
+    } catch (_) {
+      return 0;
+    }
   }
 
-  @override
-  Future<bool> isSpeakerAvailable() {
-    // TODO: implement isSpeakerAvailable
-    throw UnimplementedError();
-  }
+  /// ✅ Network Speed (same logic as Linux)
+  double _lastRx = 0;
+  double _lastTx = 0;
+  double _lastTime = 0;
 
   @override
-  Future<Map<String, dynamic>> getGeoLocation() {
-    // TODO: implement getGeoLocation
-    throw UnimplementedError();
+  Future<Map<String, String>> getNetworkSpeed() async {
+    try {
+      final result = await Process.run('bash', [
+        '-c',
+        "netstat -ib"
+      ]);
+
+      final output = result.stdout.toString();
+      final lines = output.split('\n');
+
+      double rx = 0;
+      double tx = 0;
+
+      for (var line in lines) {
+        if (line.contains('en0')) { // WiFi interface
+          final parts = line.split(RegExp(r'\s+'));
+
+          if (parts.length > 10) {
+            rx += double.tryParse(parts[6]) ?? 0;
+            tx += double.tryParse(parts[9]) ?? 0;
+          }
+        }
+      }
+
+      final now = DateTime.now().millisecondsSinceEpoch / 1000;
+
+      if (_lastTime == 0) {
+        _lastRx = rx;
+        _lastTx = tx;
+        _lastTime = now;
+
+        return {"download": "0 Kbps", "upload": "0 Kbps"};
+      }
+
+      final timeDiff = now - _lastTime;
+
+      if (timeDiff <= 0) {
+        return {"download": "0 Kbps", "upload": "0 Kbps"};
+      }
+
+      final download = (rx - _lastRx) / timeDiff;
+      final upload = (tx - _lastTx) / timeDiff;
+
+      _lastRx = rx;
+      _lastTx = tx;
+      _lastTime = now;
+
+      return {
+        "download": _formatSpeed(download),
+        "upload": _formatSpeed(upload),
+      };
+    } catch (_) {
+      return {"download": "0 Kbps", "upload": "0 Kbps"};
+    }
   }
 
+  String _formatSpeed(double bytesPerSec) {
+    double kb = bytesPerSec / 1024;
+    double mb = kb / 1024;
+
+    if (mb >= 1) {
+      return "${mb.toStringAsFixed(1)} Mbps";
+    } else {
+      return "${kb.toStringAsFixed(1)} Kbps";
+    }
+  }
+
+  /// ✅ Camera (basic check)
   @override
-  Future<List<Map<String, dynamic>>>  getAppUsage() {
-    // TODO: implement getAppUsage
-    throw UnimplementedError();
+  Future<bool> isCameraAvailable() async {
+    return true; // mac usually has camera
+  }
+
+  /// ✅ Mic
+  @override
+  Future<bool> isMicAvailable() async {
+    return true;
+  }
+
+  /// ✅ Speaker
+  @override
+  Future<bool> isSpeakerAvailable() async {
+    return true;
+  }
+
+  /// ✅ Geo Location
+  @override
+  Future<Map<String, dynamic>> getGeoLocation() async {
+    try {
+      final result = await Process.run('bash', [
+        '-c',
+        "curl -s ipinfo.io/json"
+      ]);
+
+      if (result.stdout.toString().isEmpty) {
+        return _defaultLocation();
+      }
+
+      final json = jsonDecode(result.stdout);
+
+      final loc = json['loc'] ?? "0,0";
+      final parts = loc.split(',');
+
+      return {
+        "city": json['city'] ?? '-',
+        "region": json['region'] ?? '-',
+        "country": json['country'] ?? '-',
+        "lat": parts[0],
+        "lon": parts[1],
+      };
+    } catch (_) {
+      return _defaultLocation();
+    }
+  }
+
+  Map<String, dynamic> _defaultLocation() {
+    return {
+      "city": "-",
+      "region": "-",
+      "country": "-",
+      "lat": "0",
+      "lon": "0",
+    };
+  }
+
+  /// ✅ App Usage (mac version)
+  @override
+  Future<List<Map<String, dynamic>>> getAppUsage() async {
+    try {
+      final result = await Process.run('bash', [
+        '-c',
+        "ps -eo comm,lstart"
+      ]);
+
+      final output = result.stdout.toString().trim();
+      if (output.isEmpty) return [];
+
+      final now = DateTime.now();
+      final lines = output.split('\n');
+
+      final Map<String, Map<String, dynamic>> appMap = {};
+
+      for (var i = 1; i < lines.length; i++) {
+        final parts = lines[i].trim().split(RegExp(r'\s+'));
+        if (parts.length < 6) continue;
+
+        final name = parts[0];
+
+        final dateStr =
+            "${parts[1]} ${parts[2]} ${parts[3]} ${parts[4]} ${parts[5]}";
+
+        DateTime? startTime;
+
+        try {
+          startTime = DateTime.parse(_convertMacDate(dateStr));
+        } catch (_) {
+          continue;
+        }
+
+        final duration = now.difference(startTime);
+
+        if (appMap.containsKey(name)) {
+          final existing = appMap[name]!;
+
+          final existingStart =
+          DateTime.parse(existing["From"]["DateTime"]);
+
+          if (startTime.isBefore(existingStart)) {
+            existing["From"]["DateTime"] = startTime.toString();
+          }
+
+          final newDuration = now.difference(
+              DateTime.parse(existing["From"]["DateTime"]));
+
+          existing["Duration"] = {
+            "Days": newDuration.inDays,
+            "Hours": newDuration.inHours % 24,
+            "Minutes": newDuration.inMinutes % 60,
+          };
+
+        } else {
+          appMap[name] = {
+            "Name": name,
+            "From": {"DateTime": startTime.toString()},
+            "Till": {"DateTime": now.toString()},
+            "Duration": {
+              "Days": duration.inDays,
+              "Hours": duration.inHours % 24,
+              "Minutes": duration.inMinutes % 60,
+            }
+          };
+        }
+      }
+
+      final apps = appMap.values.toList();
+
+      apps.sort((a, b) {
+        final da = a['Duration']['Days'] * 86400 +
+            a['Duration']['Hours'] * 3600 +
+            a['Duration']['Minutes'] * 60;
+
+        final db = b['Duration']['Days'] * 86400 +
+            b['Duration']['Hours'] * 3600 +
+            b['Duration']['Minutes'] * 60;
+
+        return db.compareTo(da);
+      });
+
+      return apps.take(20).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// ✅ Date converter (Mac)
+  String _convertMacDate(String input) {
+    final parts = input.split(' ');
+
+    final monthMap = {
+      "Jan": "01",
+      "Feb": "02",
+      "Mar": "03",
+      "Apr": "04",
+      "May": "05",
+      "Jun": "06",
+      "Jul": "07",
+      "Aug": "08",
+      "Sep": "09",
+      "Oct": "10",
+      "Nov": "11",
+      "Dec": "12",
+    };
+
+    final month = monthMap[parts[1]] ?? "01";
+
+    return "${parts[4]}-$month-${parts[2]} ${parts[3]}";
   }
 }

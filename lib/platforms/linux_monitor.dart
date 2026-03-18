@@ -19,8 +19,7 @@ class LinuxMonitor implements SystemMonitor {
 
       if (match != null) {
         final idle = double.parse(match.group(1)!);
-        final usage = (100 - idle).round();
-        return usage.clamp(0, 100);
+        return (100 - idle).round().clamp(0, 100);
       }
 
       return 0;
@@ -29,6 +28,7 @@ class LinuxMonitor implements SystemMonitor {
     }
   }
 
+  /// ✅ RAM Usage
   @override
   Future<int> getRamUsage() async {
     try {
@@ -59,16 +59,16 @@ class LinuxMonitor implements SystemMonitor {
       if (lines.length < 2) return 0;
 
       final parts = lines[1].split(RegExp(r'\s+'));
-
-      final usage = parts[4].replaceAll('%', '');
-
-      return int.tryParse(usage) ?? 0;
+      return int.tryParse(parts[4].replaceAll('%', '')) ?? 0;
     } catch (_) {
       return 0;
     }
   }
 
-  /// ✅ Network Speed (basic placeholder)
+  double _lastRx = 0;
+  double _lastTx = 0;
+  double _lastTime = 0;
+
   @override
   Future<Map<String, String>> getNetworkSpeed() async {
     try {
@@ -77,12 +77,57 @@ class LinuxMonitor implements SystemMonitor {
         "cat /proc/net/dev"
       ]);
 
-      // Basic placeholder (Linux calculation is complex)
+      final output = result.stdout.toString();
+
+      final lines = output.split('\n');
+
+      double rx = 0;
+      double tx = 0;
+
+      for (var line in lines) {
+        if (line.contains('eth0') || line.contains('wlan0')) {
+          final parts = line.split(RegExp(r'\s+'));
+
+          rx += double.tryParse(parts[1]) ?? 0;
+          tx += double.tryParse(parts[9]) ?? 0;
+        }
+      }
+
+      final now = DateTime.now().millisecondsSinceEpoch / 1000;
+
+      if (_lastTime == 0) {
+        _lastRx = rx;
+        _lastTx = tx;
+        _lastTime = now;
+
+        return {
+          "download": "0 Kbps",
+          "upload": "0 Kbps",
+        };
+      }
+
+      final timeDiff = now - _lastTime;
+
+      if (timeDiff <= 0) {
+        return {
+          "download": "0 Kbps",
+          "upload": "0 Kbps",
+        };
+      }
+
+      final downloadBytesPerSec = (rx - _lastRx) / timeDiff;
+      final uploadBytesPerSec = (tx - _lastTx) / timeDiff;
+
+      _lastRx = rx;
+      _lastTx = tx;
+      _lastTime = now;
+
       return {
-        "download": "0 Kbps",
-        "upload": "0 Kbps",
+        "download": _formatSpeed(downloadBytesPerSec),
+        "upload": _formatSpeed(uploadBytesPerSec),
       };
-    } catch (_) {
+
+    } catch (e) {
       return {
         "download": "0 Kbps",
         "upload": "0 Kbps",
@@ -90,52 +135,40 @@ class LinuxMonitor implements SystemMonitor {
     }
   }
 
-  /// ✅ Camera Check
+  /// ✅ Camera
   @override
   Future<bool> isCameraAvailable() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "ls /dev/video*"
-      ]);
-
+      final result = await Process.run('bash', ['-c', "ls /dev/video*"]);
       return result.stdout.toString().trim().isNotEmpty;
     } catch (_) {
       return false;
     }
   }
 
-  /// ✅ Mic Check
+  /// ✅ Mic
   @override
   Future<bool> isMicAvailable() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "arecord -l"
-      ]);
-
+      final result = await Process.run('bash', ['-c', "arecord -l"]);
       return result.stdout.toString().contains('card');
     } catch (_) {
       return false;
     }
   }
 
-  /// ✅ Speaker Check
+  /// ✅ Speaker
   @override
   Future<bool> isSpeakerAvailable() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "aplay -l"
-      ]);
-
+      final result = await Process.run('bash', ['-c', "aplay -l"]);
       return result.stdout.toString().contains('card');
     } catch (_) {
       return false;
     }
   }
 
-  /// ✅ Geo Location (safe fallback)
+  /// ✅ Geo Location
   @override
   Future<Map<String, dynamic>> getGeoLocation() async {
     try {
@@ -144,7 +177,7 @@ class LinuxMonitor implements SystemMonitor {
         "curl -s ipinfo.io/json"
       ]);
 
-      if (result.stdout == null || result.stdout.toString().isEmpty) {
+      if (result.stdout.toString().isEmpty) {
         return _defaultLocation();
       }
 
@@ -175,7 +208,6 @@ class LinuxMonitor implements SystemMonitor {
     };
   }
 
-  /// ✅ App Usage (Linux equivalent)
   @override
   Future<List<Map<String, dynamic>>> getAppUsage() async {
     try {
@@ -190,14 +222,18 @@ class LinuxMonitor implements SystemMonitor {
       final now = DateTime.now();
       final lines = output.split('\n');
 
-      final List<Map<String, dynamic>> apps = [];
+      final Map<String, Map<String, dynamic>> appMap = {};
 
       for (var line in lines) {
         final parts = line.trim().split(RegExp(r'\s+'));
-
         if (parts.length < 6) continue;
 
         final name = parts[0];
+
+        /// 🔥 Filter unwanted system processes (optional)
+        if (name.contains("system") ||
+            name.contains("dbus") ||
+            name.contains("bash")) continue;
 
         final dateStr =
             "${parts[1]} ${parts[2]} ${parts[3]} ${parts[4]} ${parts[5]}";
@@ -212,20 +248,45 @@ class LinuxMonitor implements SystemMonitor {
 
         final duration = now.difference(startTime);
 
-        apps.add({
-          "Name": name,
-          "From": {"DateTime": startTime.toString()},
-          "Till": {"DateTime": now.toString()},
-          "Duration": {
-            "Days": duration.inDays,
-            "Hours": duration.inHours % 24,
-            "Minutes": duration.inMinutes % 60,
-            "Seconds": duration.inSeconds % 60,
+        if (appMap.containsKey(name)) {
+          final existing = appMap[name]!;
+
+          final existingStart =
+          DateTime.parse(existing["From"]["DateTime"]);
+
+          /// Keep earliest start
+          if (startTime.isBefore(existingStart)) {
+            existing["From"]["DateTime"] = startTime.toString();
           }
-        });
+
+          final newDuration = now.difference(
+              DateTime.parse(existing["From"]["DateTime"]));
+
+          existing["Duration"] = {
+            "Days": newDuration.inDays,
+            "Hours": newDuration.inHours % 24,
+            "Minutes": newDuration.inMinutes % 60,
+            "Seconds": newDuration.inSeconds % 60,
+          };
+
+        } else {
+          appMap[name] = {
+            "Name": name,
+            "From": {"DateTime": startTime.toString()},
+            "Till": {"DateTime": now.toString()},
+            "Duration": {
+              "Days": duration.inDays,
+              "Hours": duration.inHours % 24,
+              "Minutes": duration.inMinutes % 60,
+              "Seconds": duration.inSeconds % 60,
+            }
+          };
+        }
       }
 
-      // Sort longest running first
+      final apps = appMap.values.toList();
+
+      /// Sort longest running first
       apps.sort((a, b) {
         final da = a['Duration']['Days'] * 86400 +
             a['Duration']['Hours'] * 3600 +
@@ -244,7 +305,7 @@ class LinuxMonitor implements SystemMonitor {
     }
   }
 
-  /// ✅ Helper to convert Linux date
+  /// ✅ Date converter
   String _convertLinuxDate(String input) {
     final parts = input.split(' ');
 
@@ -266,5 +327,17 @@ class LinuxMonitor implements SystemMonitor {
     final month = monthMap[parts[1]] ?? "01";
 
     return "${parts[4]}-$month-${parts[2]} ${parts[3]}";
+  }
+
+
+  String _formatSpeed(double bytesPerSec) {
+    double kb = bytesPerSec / 1024;
+    double mb = kb / 1024;
+
+    if (mb >= 1) {
+      return "${mb.toStringAsFixed(1)} Mbps";
+    } else {
+      return "${kb.toStringAsFixed(1)} Kbps";
+    }
   }
 }
