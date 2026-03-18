@@ -210,99 +210,76 @@ class LinuxMonitor implements SystemMonitor {
 
   @override
   Future<List<Map<String, dynamic>>> getAppUsage() async {
+    final now = DateTime.now();
+    final Map<String, Map<String, dynamic>> appMap = {};
+
     try {
+      // Run ps for user processes
       final result = await Process.run('bash', [
         '-c',
-        "ps -eo comm,lstart --no-headers"
+        "ps -u \$USER -o pid,comm,etimes,cputime --sort=-cputime"
       ]);
 
       final output = result.stdout.toString().trim();
       if (output.isEmpty) return [];
 
-      final now = DateTime.now();
       final lines = output.split('\n');
 
-      final Map<String, Map<String, dynamic>> appMap = {};
+      // Skip header
+      for (var i = 1; i < lines.length; i++) {
+        final line = lines[i].trim();
+        if (line.isEmpty) continue;
 
-      for (var line in lines) {
-        final parts = line.trim().split(RegExp(r'\s+'));
-        if (parts.length < 6) continue;
+        final parts = line.split(RegExp(r'\s+'));
+        if (parts.length < 4) continue;
 
-        final name = parts[0];
+        final pid = parts[0];
+        final comm = parts[1]; // app name
+        final etimes = int.tryParse(parts[2]) ?? 0; // elapsed seconds
+        final cpuTime = parts[3]; // CPU time string
 
-        /// 🔥 Filter unwanted system processes (optional)
-        if (name.contains("system") ||
-            name.contains("dbus") ||
-            name.contains("bash")) continue;
+        // Filter system/background processes
+        if (_isSystemProcess(comm)) continue;
 
-        final dateStr =
-            "${parts[1]} ${parts[2]} ${parts[3]} ${parts[4]} ${parts[5]}";
+        final fromTime = now.subtract(Duration(seconds: etimes));
+        final duration = Duration(seconds: etimes);
 
-        DateTime? startTime;
-
-        try {
-          startTime = DateTime.parse(_convertLinuxDate(dateStr));
-        } catch (_) {
-          continue;
-        }
-
-        final duration = now.difference(startTime);
-
-        if (appMap.containsKey(name)) {
-          final existing = appMap[name]!;
-
-          final existingStart =
-          DateTime.parse(existing["From"]["DateTime"]);
-
-          /// Keep earliest start
-          if (startTime.isBefore(existingStart)) {
-            existing["From"]["DateTime"] = startTime.toString();
-          }
-
-          final newDuration = now.difference(
-              DateTime.parse(existing["From"]["DateTime"]));
-
-          existing["Duration"] = {
-            "Days": newDuration.inDays,
-            "Hours": newDuration.inHours % 24,
-            "Minutes": newDuration.inMinutes % 60,
-            "Seconds": newDuration.inSeconds % 60,
-          };
-
-        } else {
-          appMap[name] = {
-            "Name": name,
-            "From": {"DateTime": startTime.toString()},
-            "Till": {"DateTime": now.toString()},
-            "Duration": {
-              "Days": duration.inDays,
-              "Hours": duration.inHours % 24,
-              "Minutes": duration.inMinutes % 60,
-              "Seconds": duration.inSeconds % 60,
-            }
-          };
-        }
+        appMap[comm] = {
+          "Name": comm,
+          "PID": pid,
+          "From": {"DateTime": fromTime.toString()},
+          "Till": {"DateTime": now.toString()},
+          "Duration": {
+            "Days": duration.inDays,
+            "Hours": duration.inHours % 24,
+            "Minutes": duration.inMinutes % 60,
+            "Seconds": duration.inSeconds % 60,
+          },
+          "CPUTime": cpuTime,
+        };
       }
 
-      final apps = appMap.values.toList();
-
-      /// Sort longest running first
-      apps.sort((a, b) {
-        final da = a['Duration']['Days'] * 86400 +
-            a['Duration']['Hours'] * 3600 +
-            a['Duration']['Minutes'] * 60;
-
-        final db = b['Duration']['Days'] * 86400 +
-            b['Duration']['Hours'] * 3600 +
-            b['Duration']['Minutes'] * 60;
-
-        return db.compareTo(da);
-      });
-
-      return apps.take(20).toList();
-    } catch (_) {
+      return appMap.values.toList();
+    } catch (e) {
       return [];
     }
+  }
+
+  /// Filter system / background processes
+  bool _isSystemProcess(String name) {
+    final blacklist = [
+      'kworker', 'rcu', 'migration', 'systemd', 'dbus', 'snapd',
+      'bash', 'sh', 'ps', 'dart', 'init', 'login', 'agetty',
+      'cron', 'rsyslog', 'NetworkManager', 'udisks', 'gvfs',
+      'ibus', 'gsd-', 'pipewire', 'wireplumber', 'Xwayland',
+      'mutter', 'xdg-', 'evolution', 'cat', 'goa-', 'sd-pam', 'gdm-',
+      'gnome-', 'at-','dconf-','ubuntu-', 'update-', 'tracker-','gjs'
+    ];
+
+    for (var item in blacklist) {
+      if (name.contains(item)) return true;
+    }
+    return false;
   }
 
   /// ✅ Date converter
