@@ -1,7 +1,7 @@
 class SystemStatus {
-  final double cpuUsage;
-  final double ramUsage;
-  final double diskUsage;
+  final int cpuUsage;
+  final int ramUsage;
+  final int diskUsage;
   final String cpuName;
   final String gpuName;
   final double downloadSpeed;
@@ -15,6 +15,7 @@ class SystemStatus {
 
   // Additional Information
   final Map<String, String> additionalInfo;
+  final Map<String, String> locationInfo;
 
   SystemStatus({
     required this.cpuUsage,
@@ -31,6 +32,7 @@ class SystemStatus {
     required this.batteryLevel,
     required this.batteryStatus,
     required this.additionalInfo,
+    required this.locationInfo,
   });
 
   bool get isHealthy {

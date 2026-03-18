@@ -1,105 +1,150 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_device_info_plus/flutter_device_info_plus.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
+import '../core/monitor_factory.dart';
 import '../models/system_status.dart';
 
 class SystemMonitorService {
-  final Connectivity _connectivity = Connectivity();
-  final Random _random = Random();
   final FlutterDeviceInfoPlus _deviceInfoPlugin = const FlutterDeviceInfoPlus();
+  final Connectivity _connectivity = Connectivity();
+
+  static final SystemMonitorService _instance =
+  SystemMonitorService._internal();
+
+  factory SystemMonitorService() => _instance;
+
+  SystemMonitorService._internal();
+
+  final monitor = MonitorFactory.create();
+
+  final StreamController<SystemStatus> _controller =
+  StreamController<SystemStatus>.broadcast();
+
+
+
+
+  SystemStatus? _cachedStatus;
+
+
+  SystemStatus? get cachedStatus => _cachedStatus;
+
+  Timer? _timer;
+
+  Stream<SystemStatus> getStatusStream() {
+    _init();
+
+    if (_cachedStatus != null) {
+      Future.microtask(() {
+        _controller.add(_cachedStatus!);
+      });
+    }
+
+    return _controller.stream;
+  }
+
+
+  void _init() {
+    if (_timer != null) return;
+
+    _fetchAndEmit();
+
+    _timer = Timer.periodic(const Duration(hours: 1), (_) {
+      _fetchAndEmit();
+    });
+  }
+
+  Future<void> refreshNow() async {
+    await _fetchAndEmit();
+  }
+
+  Future<void> _fetchAndEmit() async {
+    try {
+      final status = await getSystemStatus();
+      _cachedStatus = status;
+      _controller.add(status);
+    } catch (e) {
+      print("Error: $e");
+      if (_cachedStatus != null) {
+        _controller.add(_cachedStatus!);
+      }
+    }
+  }
 
   Future<SystemStatus> getSystemStatus() async {
-    String osName = Platform.operatingSystem;
-    String deviceName = "Desktop Device";
-    String cpuName = "Unknown Processor";
-    String gpuName = "Integrated Graphics";
-    double ramUsage = 0.0;
-    double diskUsage = 0.0;
-    double temperature = 0.0;
-    int batteryLevel = 0;
-    String batteryStatus = "Unknown";
-    Map<String, String> additionalInfo = {};
+    final info = await _deviceInfoPlugin.getDeviceInfo();
 
-    try {
-      final info = await _deviceInfoPlugin.getDeviceInfo();
-      
-      // Hardware/Device Info
-      deviceName = info.deviceName != "Unknown" ? info.deviceName : info.model;
-      osName = "${info.operatingSystem} ${info.systemVersion}";
-      cpuName = info.processorInfo.processorName;
-      
-      if (info.displayInfo.isHdr) {
-        gpuName = "High Performance GPU";
-      }
+    final cpu = await monitor.getCpuUsage();
+    final ram = await monitor.getRamUsage();
+    final disk = await monitor.getDiskUsage();
 
-      // Memory Info
-      ramUsage = info.memoryInfo.memoryUsagePercentage;
-      
-      // Storage Info
-      if (info.memoryInfo.totalStorageSpace > 0) {
-        diskUsage = (info.memoryInfo.usedStorageSpace / info.memoryInfo.totalStorageSpace) * 100;
-      }
+    final networkSpeed = await monitor.getNetworkSpeed();
 
-      // Battery Info
-      if (info.batteryInfo != null) {
-        batteryLevel = info.batteryInfo!.batteryLevel;
-        batteryStatus = info.batteryInfo!.chargingStatus;
-        temperature = info.batteryInfo!.batteryTemperature;
-      }
+    final camera = await monitor.isCameraAvailable();
+    final mic = await monitor.isMicAvailable();
+    final speaker = await monitor.isSpeakerAvailable();
 
-      // Map additional fields from plugin to the dashboard card
-      additionalInfo = {
+    final geo = await monitor.getGeoLocation();
+
+    final connectivityResult = await _connectivity.checkConnectivity();
+    bool isInternetConnected =
+    !connectivityResult.contains(ConnectivityResult.none);
+
+    return SystemStatus(
+      cpuUsage: cpu,
+      ramUsage: ram,
+      diskUsage: disk,
+
+      cpuName: info.processorInfo.processorName,
+      gpuName: "GPU",
+
+      downloadSpeed: networkSpeed.containsKey('download')
+          ? double.tryParse(networkSpeed['download']!.split(' ')[0]) ?? 0
+          : 0,
+
+      uploadSpeed: networkSpeed.containsKey('upload')
+          ? double.tryParse(networkSpeed['upload']!.split(' ')[0]) ?? 0
+          : 0,
+
+      isConnected: isInternetConnected,
+      temperature: info.batteryInfo!.batteryTemperature,
+
+      osName: "${info.operatingSystem} ${info.systemVersion}",
+      deviceName: Platform.localHostname,
+
+      batteryLevel: info.batteryInfo!.batteryLevel,
+      batteryStatus: info.batteryInfo!.chargingStatus,
+
+      additionalInfo: {
         'Computer Name': info.deviceName,
         'CPU Cores': info.processorInfo.coreCount.toString(),
-        'Total RAM': "${(info.memoryInfo.totalPhysicalMemory / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB",
-        'User Name': Platform.environment['USERNAME'] ?? Platform.environment['USER'] ?? 'Unknown',
+        'Total RAM':
+        "${(info.memoryInfo.totalPhysicalMemory / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB",
+        'User Name':
+        Platform.environment['USERNAME'] ??
+            Platform.environment['USER'] ??
+            'Unknown',
         'OS Build': info.systemVersion,
         'Build Number': info.buildNumber,
         'Kernel': info.kernelVersion,
         'Platform ID': Platform.operatingSystem,
         'Manufacturer': info.manufacturer,
         'Model': info.model,
-      };
+      },
 
-    } catch (e) {
-      deviceName = "Generic ${Platform.operatingSystem}";
-    }
-
-    // Fallbacks
-    if (ramUsage <= 0) ramUsage = 20 + _random.nextDouble() * 40;
-    if (diskUsage <= 0) diskUsage = 45.0;
-    if (temperature <= 0) temperature = 35 + _random.nextDouble() * 15;
-    if (batteryLevel <= 0) batteryLevel = 85;
-
-    final connectivityResult = await _connectivity.checkConnectivity();
-    bool isConnected = !connectivityResult.contains(ConnectivityResult.none);
-
-    return SystemStatus(
-      cpuUsage: 10 + _random.nextDouble() * 50,
-      ramUsage: ramUsage,
-      diskUsage: diskUsage,
-      cpuName: cpuName,
-      gpuName: gpuName,
-      downloadSpeed: isConnected ? 30 + _random.nextDouble() * 40 : 0.0,
-      uploadSpeed: isConnected ? 5 + _random.nextDouble() * 15 : 0.0,
-      isConnected: isConnected,
-      temperature: temperature,
-      osName: osName,
-      deviceName: deviceName,
-      batteryLevel: batteryLevel,
-      batteryStatus: batteryStatus,
-      additionalInfo: additionalInfo,
+      locationInfo: {
+        'Camera': camera ? 'Yes' : 'No',
+        'Mic': mic ? 'Yes' : 'No',
+        'Speaker': speaker ? 'Yes' : 'No',
+        'City': geo['city'] ?? 'No Internet',
+        'Region': geo['region'] ?? '-',
+        'Country': geo['country'] ?? '-',
+        'Latitude': geo['lat'] ?? '0',
+        'Longitude': geo['lon'] ?? '0',
+      },
     );
-  }
-
-  Stream<SystemStatus> getStatusStream() async* {
-    while (true) {
-      yield await getSystemStatus();
-      await Future.delayed(const Duration(seconds: 3));
-    }
   }
 }

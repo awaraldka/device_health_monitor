@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: Center(
-        child: StreamBuilder<SystemStatus>( // Changed to StreamBuilder for real-time start
+        child: StreamBuilder<SystemStatus>(
           stream: _monitorService.getStatusStream(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -32,11 +32,14 @@ class HomeScreen extends StatelessWidget {
             }
 
             final status = snapshot.data!;
+            final bool hasInternet = status.isConnected;
+
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 StatusCard(
-                  isHealthy: status.isHealthy,
+                  isHealthy: status.isHealthy && hasInternet,
+                  statusText: hasInternet ? null : 'Internet Required',
                   onMonitorPressed: () {
                     Navigator.push(
                       context,

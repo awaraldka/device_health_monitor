@@ -7,13 +7,16 @@ import '../widgets/metric_card.dart';
 class MonitorDashboard extends StatefulWidget {
   const MonitorDashboard({super.key});
 
+
+
+
   @override
   State<MonitorDashboard> createState() => _MonitorDashboardState();
 }
 
 class _MonitorDashboardState extends State<MonitorDashboard> {
   final SystemMonitorService _monitorService = SystemMonitorService();
-  final List<double> cpuHistory = List.generate(20, (_) => 0.0);
+  final List<int> cpuHistory = List.generate(20, (_) => 0);
 
   @override
   Widget build(BuildContext context) {
@@ -23,15 +26,34 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
         title: const Text('Real-time Monitoring'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () async {
+              await _monitorService.refreshNow();
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Data refreshed"),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<SystemStatus>(
         stream: _monitorService.getStatusStream(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          final status =
+              snapshot.data ?? _monitorService.cachedStatus;
+
+          if (status == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final status = snapshot.data!;
           cpuHistory.add(status.cpuUsage);
           if (cpuHistory.length > 20) cpuHistory.removeAt(0);
 
@@ -44,7 +66,8 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
                   _buildHeader(status),
                   const SizedBox(height: 24),
                   GridView.count(
-                    crossAxisCount: MediaQuery.of(context).size.width > 1200 ? 5 : 2,
+                    crossAxisCount:
+                        MediaQuery.of(context).size.width > 1200 ? 5 : 2,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 16,
@@ -53,28 +76,34 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
                     children: [
                       MetricCard(
                         title: 'CPU Usage',
-                        value: '${status.cpuUsage.toStringAsFixed(1)}%',
+                        value: '${status.cpuUsage}%',
                         percentage: status.cpuUsage / 100,
                         icon: Icons.developer_board,
                         color: status.cpuUsage > 80 ? Colors.red : Colors.blue,
                       ),
                       MetricCard(
                         title: 'RAM Usage',
-                        value: '${status.ramUsage.toStringAsFixed(1)}%',
+                        value: '${status.ramUsage}%',
                         percentage: status.ramUsage / 100,
                         icon: Icons.memory,
-                        color: status.ramUsage > 80 ? Colors.red : Colors.orange,
+                        color:
+                            status.ramUsage > 80 ? Colors.red : Colors.orange,
                       ),
                       MetricCard(
                         title: 'Battery',
                         value: '${status.batteryLevel}%',
                         percentage: status.batteryLevel / 100,
-                        icon: status.batteryLevel > 20 ? Icons.battery_full : Icons.battery_alert,
-                        color: status.batteryLevel > 20 ? Colors.green : Colors.red,
+                        icon: status.batteryLevel > 20
+                            ? Icons.battery_full
+                            : Icons.battery_alert,
+                        color: status.batteryLevel > 20
+                            ? Colors.green
+                            : Colors.red,
                       ),
                       MetricCard(
                         title: 'Download',
-                        value: '${status.downloadSpeed.toStringAsFixed(1)} Mbps',
+                        value:
+                            '${status.downloadSpeed.toStringAsFixed(1)} Mbps',
                         percentage: status.downloadSpeed / 100,
                         icon: Icons.download_sharp,
                         color: Colors.purple,
@@ -92,17 +121,35 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      /// LEFT SIDE → Chart + Additional (stacked)
                       Expanded(
                         flex: 2,
-                        child: _buildChartSection('CPU Usage History'),
+                        child: Column(
+                          children: [
+                            /// 📊 Chart (top left)
+                            _buildChartSection('CPU Usage History'),
+
+                            const SizedBox(height: 16),
+
+                            /// 📋 Additional Info (bottom left)
+                            _buildAdditionalInfo(status),
+                          ],
+                        ),
                       ),
+
                       const SizedBox(width: 16),
+
+                      /// RIGHT SIDE → Hardware + Location (stacked)
                       Expanded(
                         child: Column(
                           children: [
+                            /// 🔧 Hardware (top right)
                             _buildHardwareDetails(status),
+
                             const SizedBox(height: 16),
-                            _buildAdditionalInfo(status),
+
+                            /// 📍 Location (bottom right)
+                            _buildLocationInfo(status),
                           ],
                         ),
                       ),
@@ -141,7 +188,9 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: status.isConnected ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+            color: status.isConnected
+                ? Colors.green.withOpacity(0.1)
+                : Colors.red.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: status.isConnected ? Colors.green : Colors.red,
@@ -178,7 +227,9 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             SizedBox(
               height: 200,
@@ -190,7 +241,10 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
                   lineBarsData: [
                     LineChartBarData(
                       spots: cpuHistory.asMap().entries.map((e) {
-                        return FlSpot(e.key.toDouble(), e.value);
+                        return FlSpot(
+                          e.key.toDouble(),
+                          e.value.toDouble(),
+                        );
                       }).toList(),
                       isCurved: true,
                       color: Colors.indigo,
@@ -220,13 +274,16 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Hardware Info', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Hardware Info',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Divider(height: 32),
             _infoRow(Icons.laptop, 'OS', status.osName),
             _infoRow(Icons.developer_board, 'CPU', status.cpuName),
             _infoRow(Icons.videogame_asset, 'GPU', status.gpuName),
-            _infoRow(Icons.storage, 'Disk', '${status.diskUsage.toStringAsFixed(1)}% Used'),
-            _infoRow(Icons.thermostat, 'Temp', '${status.temperature.toStringAsFixed(1)}°C'),
+            _infoRow(Icons.storage, 'Disk',
+                '${status.diskUsage.toStringAsFixed(1)}% Used'),
+            _infoRow(Icons.thermostat, 'Temp',
+                '${status.temperature.toStringAsFixed(1)}°C'),
           ],
         ),
       ),
@@ -242,9 +299,33 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Additional Info', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('System Info',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Divider(height: 32),
-            ...status.additionalInfo.entries.map((e) => _infoRow(Icons.info_outline, e.key, e.value)).toList(),
+            ...status.additionalInfo.entries
+                .map((e) => _infoRow(Icons.info_outline, e.key, e.value))
+                .toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationInfo(SystemStatus status) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Additional Info',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Divider(height: 32),
+            ...status.locationInfo.entries
+                .map((e) => _infoRow(Icons.info_outline, e.key, e.value))
+                .toList(),
           ],
         ),
       ),
@@ -264,7 +345,9 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
               text: TextSpan(
                 style: const TextStyle(color: Colors.black87, fontSize: 13),
                 children: [
-                  TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  TextSpan(
+                      text: '$label: ',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   TextSpan(text: value),
                 ],
               ),
