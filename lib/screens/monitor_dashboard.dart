@@ -7,40 +7,81 @@ import '../widgets/metric_card.dart';
 class MonitorDashboard extends StatefulWidget {
   const MonitorDashboard({super.key});
 
-
-
-
   @override
   State<MonitorDashboard> createState() => _MonitorDashboardState();
 }
 
-class _MonitorDashboardState extends State<MonitorDashboard> {
+class _MonitorDashboardState extends State<MonitorDashboard>
+    with TickerProviderStateMixin {
   final SystemMonitorService _monitorService = SystemMonitorService();
   final List<int> cpuHistory = List.generate(20, (_) => 0);
+
+  late AnimationController _controller;
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    _controller.repeat();
+
+    await _monitorService.refreshNow();
+
+    _controller.stop();
+    _controller.reset();
+
+    if (mounted) {
+      setState(() {
+        _isRefreshing = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Data refreshed"),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Real-time Monitoring'),
+        title: const Text('Monitoring'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () async {
-              await _monitorService.refreshNow();
+            onPressed: _isRefreshing ? null : _handleRefresh,
+            icon: RotationTransition(
+              turns: _controller,
+              child: const Icon(Icons.refresh),
+            ),
+          ),
 
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Data refreshed"),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              }
-            },
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => SystemMonitorService().clickLogout(context),
+            tooltip: 'Logout',
           ),
         ],
       ),
@@ -65,9 +106,11 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
                 children: [
                   _buildHeader(status),
                   const SizedBox(height: 24),
+
+                  /// 📊 Metrics Grid
                   GridView.count(
                     crossAxisCount:
-                        MediaQuery.of(context).size.width > 1200 ? 5 : 2,
+                    MediaQuery.of(context).size.width > 1200 ? 5 : 2,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 16,
@@ -87,7 +130,7 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
                         percentage: status.ramUsage / 100,
                         icon: Icons.memory,
                         color:
-                            status.ramUsage > 80 ? Colors.red : Colors.orange,
+                        status.ramUsage > 80 ? Colors.red : Colors.orange,
                       ),
                       MetricCard(
                         title: 'Battery',
@@ -103,60 +146,62 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
                       MetricCard(
                         title: 'Download',
                         value:
-                            '${status.downloadSpeed.toStringAsFixed(1)} Mbps',
+                        '${status.downloadSpeed.toStringAsFixed(1)} Mbps',
                         percentage: status.downloadSpeed / 100,
                         icon: Icons.download_sharp,
                         color: Colors.purple,
                       ),
                       MetricCard(
                         title: 'Upload',
-                        value: '${status.uploadSpeed.toStringAsFixed(1)} Mbps',
+                        value:
+                        '${status.uploadSpeed.toStringAsFixed(1)} Mbps',
                         percentage: status.uploadSpeed / 100,
                         icon: Icons.upload_sharp,
                         color: Colors.teal,
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 24),
+
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// LEFT SIDE → Chart + Additional (stacked)
                       Expanded(
                         flex: 2,
                         child: Column(
                           children: [
-                            /// 📊 Chart (top left)
                             _buildChartSection('CPU Usage History'),
-
                             const SizedBox(height: 16),
-
-                            /// 📋 Additional Info (bottom left)
                             _buildAdditionalInfo(status),
                           ],
                         ),
                       ),
-
                       const SizedBox(width: 16),
-
-                      /// RIGHT SIDE → Hardware + Location (stacked)
                       Expanded(
                         child: Column(
                           children: [
-                            /// 🔧 Hardware (top right)
                             _buildHardwareDetails(status),
-
                             const SizedBox(height: 16),
-
-                            /// 📍 Location (bottom right)
                             _buildLocationInfo(status),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            _buildAppUsage(status),
+                            const SizedBox(height: 16)
                           ],
                         ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 40),
                 ],
+
               ),
             ),
           );
@@ -175,9 +220,9 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
             Text(
               'System Dashboard',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.indigo.shade900,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: Colors.indigo.shade900,
+              ),
             ),
             Text(
               'Real-time metrics for ${status.deviceName}',
@@ -229,7 +274,7 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
           children: [
             Text(title,
                 style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             SizedBox(
               height: 200,
@@ -303,8 +348,7 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const Divider(height: 32),
             ...status.additionalInfo.entries
-                .map((e) => _infoRow(Icons.info_outline, e.key, e.value))
-                .toList(),
+                .map((e) => _infoRow(Icons.info_outline, e.key, e.value)),
           ],
         ),
       ),
@@ -357,4 +401,83 @@ class _MonitorDashboardState extends State<MonitorDashboard> {
       ),
     );
   }
+
+
+  Widget _buildAppUsage(SystemStatus status) {
+    if (status.appData.isEmpty) {
+      return const Text("No App Usage Data");
+    }
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'App Usage',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Divider(height: 24),
+
+            /// 🔥 Top 5 apps only (optional)
+            ...status.appData.map((app) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.apps, color: Colors.indigo, size: 20),
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          /// App Name
+                          Text(
+                            app.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          /// From → Till
+                          Text(
+                            "${app.from} → ${app.till}",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+
+                          /// Duration
+                          Text(
+                            "⏱ ${app.duration}",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.indigo,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+
 }

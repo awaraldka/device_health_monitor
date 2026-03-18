@@ -8,6 +8,7 @@ abstract class SystemMonitor {
   Future<bool> isMicAvailable();
   Future<bool> isSpeakerAvailable();
   Future<Map<String, dynamic>>  getGeoLocation();
+  Future<List<Map<String, dynamic>>> getAppUsage();
 
 
 }

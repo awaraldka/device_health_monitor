@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/system_monitor_service.dart';
 import '../models/system_status.dart';
 import '../widgets/status_card.dart';
 import 'monitor_dashboard.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final SystemMonitorService _monitorService = SystemMonitorService();
 
   HomeScreen({super.key});
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +22,13 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => SystemMonitorService().clickLogout(context),
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: Center(
         child: StreamBuilder<SystemStatus>(
@@ -66,4 +77,7 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+
+
 }

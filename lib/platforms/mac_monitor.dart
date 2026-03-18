@@ -39,4 +39,10 @@ class MacMonitor implements SystemMonitor {
     // TODO: implement getGeoLocation
     throw UnimplementedError();
   }
+
+  @override
+  Future<List<Map<String, dynamic>>>  getAppUsage() {
+    // TODO: implement getAppUsage
+    throw UnimplementedError();
+  }
 }

@@ -1,3 +1,5 @@
+import 'package:device_health_monitor/models/app_usage.dart';
+
 class SystemStatus {
   final int cpuUsage;
   final int ramUsage;
@@ -16,6 +18,7 @@ class SystemStatus {
   // Additional Information
   final Map<String, String> additionalInfo;
   final Map<String, String> locationInfo;
+  final List<AppUsageData> appData;
 
   SystemStatus({
     required this.cpuUsage,
@@ -33,6 +36,7 @@ class SystemStatus {
     required this.batteryStatus,
     required this.additionalInfo,
     required this.locationInfo,
+    required this.appData,
   });
 
   bool get isHealthy {

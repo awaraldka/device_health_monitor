@@ -215,4 +215,34 @@ class WindowsMonitor implements SystemMonitor {
     };
   }
 
+  @override
+  @override
+  Future<List<Map<String, dynamic>>> getAppUsage() async {
+    try {
+      final result = await Process.run('powershell', [
+        '-Command',
+        '''
+      Get-Process | Where-Object {\$_.MainWindowTitle} |
+      Select-Object Name,
+      @{Name="From"; Expression={\$_.StartTime}},
+      @{Name="Till"; Expression={Get-Date}},
+      @{Name="Duration"; Expression={(Get-Date) - \$_.StartTime}} |
+      Sort-Object Duration -Descending |
+      ConvertTo-Json
+      '''
+      ]);
+
+      final output = result.stdout.toString().trim();
+      if (output.isEmpty) return [];
+
+      final decoded = jsonDecode(output);
+
+      return decoded is List
+          ? List<Map<String, dynamic>>.from(decoded)
+          : [Map<String, dynamic>.from(decoded)];
+    } catch (_) {
+      return [];
+    }
+  }
+
 }

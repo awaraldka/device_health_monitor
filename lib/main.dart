@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const DeviceHealthMonitorApp());
+  final prefs = await SharedPreferences.getInstance();
+  final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+  runApp(DeviceHealthMonitorApp(isLoggedIn: isLoggedIn));
 }
 
 class DeviceHealthMonitorApp extends StatelessWidget {
-  const DeviceHealthMonitorApp({super.key});
+  final bool isLoggedIn;
+  const DeviceHealthMonitorApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +30,15 @@ class DeviceHealthMonitorApp extends StatelessWidget {
         colorSchemeSeed: Colors.indigo,
         brightness: Brightness.dark,
       ),
-      home: HomeScreen(),
+      builder: (context, child) {
+        return ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            scrollbars: false,
+          ),
+          child: child!,
+        );
+      },
+      home: isLoggedIn ? HomeScreen() : const LoginScreen(),
     );
   }
 }

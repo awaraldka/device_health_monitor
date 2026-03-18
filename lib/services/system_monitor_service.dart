@@ -2,8 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_health_monitor/models/app_usage.dart';
+import 'package:device_health_monitor/screens/login_screen.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_device_info_plus/flutter_device_info_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/monitor_factory.dart';
 import '../models/system_status.dart';
@@ -89,6 +94,14 @@ class SystemMonitorService {
 
     final geo = await monitor.getGeoLocation();
 
+    final appUsage = await monitor.getAppUsage();
+    final apps = appUsage
+        .map((e) => AppUsageData.fromMap(e))
+        .toList();
+
+
+
+
     final connectivityResult = await _connectivity.checkConnectivity();
     bool isInternetConnected =
     !connectivityResult.contains(ConnectivityResult.none);
@@ -145,6 +158,23 @@ class SystemMonitorService {
         'Latitude': geo['lat'] ?? '0',
         'Longitude': geo['lon'] ?? '0',
       },
+      appData: apps,
+
+
+
+    );
+  }
+
+  Future<void> clickLogout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', false);
+
+    if (!context.mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
     );
   }
 }
