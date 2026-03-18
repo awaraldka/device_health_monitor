@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 class StatusCard extends StatelessWidget {
   final bool isHealthy;
+  final String? statusText;
   final VoidCallback onMonitorPressed;
 
   const StatusCard({
     super.key,
     required this.isHealthy,
+    this.statusText,
     required this.onMonitorPressed,
   });
 
@@ -43,7 +45,8 @@ class StatusCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              isHealthy ? 'Healthy' : 'Unhealthy',
+              statusText ?? (isHealthy ? 'Healthy' : 'Unhealthy'),
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 32,
