@@ -1,0 +1,28 @@
+PODS:
+  - connectivity_plus (0.0.1):
+    - FlutterMacOS
+  - flutter_device_info_plus (0.0.5):
+    - FlutterMacOS
+  - FlutterMacOS (1.0.0)
+
+DEPENDENCIES:
+  - connectivity_plus (from `Flutter/ephemeral/.symlinks/plugins/connectivity_plus/macos`)
+  - flutter_device_info_plus (from `Flutter/ephemeral/.symlinks/plugins/flutter_device_info_plus/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+
+EXTERNAL SOURCES:
+  connectivity_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/connectivity_plus/macos
+  flutter_device_info_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_device_info_plus/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+
+SPEC CHECKSUMS:
+  connectivity_plus: 0a976dfd033b59192912fa3c6c7b54aab5093802
+  flutter_device_info_plus: 36eb3601e0dfa072415b64b0d23ac8868b8d2d03
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+
+PODFILE CHECKSUM: 6f9e1cb8b77605431d6b7a80bd01a6d70149982d
+
+COCOAPODS: 1.16.2
