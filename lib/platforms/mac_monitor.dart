@@ -1,25 +1,39 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+
 import '../core/system_monitor.dart';
+import '../services/cpu_monitor.dart';
 
 class MacMonitor implements SystemMonitor {
 
-  /// ✅ CPU Usage
+
+  final cpuMonitor = CpuMonitor();
+  static const MethodChannel _channel = MethodChannel('gpu_info');
+
+
   @override
   Future<int> getCpuUsage() async {
+
+    return await cpuMonitor.getCpuUsage();
+  }
+
+  @override
+  Future<int> getRamUsage() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "top -l 1 | grep 'CPU usage'"
-      ]);
+      final result = await Process.run(
+          'bash', ['-c', "memory_pressure"]);
 
       final output = result.stdout.toString();
 
-      final match = RegExp(r'(\d+\.\d+)% idle').firstMatch(output);
+      final usedMatch =
+      RegExp(r'System-wide memory free percentage:\s+(\d+)%')
+          .firstMatch(output);
 
-      if (match != null) {
-        final idle = double.parse(match.group(1)!);
-        return (100 - idle).round().clamp(0, 100);
+      if (usedMatch != null) {
+        final freePercent = int.parse(usedMatch.group(1)!);
+        return 100 - freePercent;
       }
 
       return 0;
@@ -28,40 +42,6 @@ class MacMonitor implements SystemMonitor {
     }
   }
 
-  /// ✅ RAM Usage
-  @override
-  Future<int> getRamUsage() async {
-    try {
-      final result = await Process.run('bash', [
-        '-c',
-        "vm_stat"
-      ]);
-
-      final output = result.stdout.toString();
-
-      final pageSizeMatch =
-      RegExp(r'page size of (\d+) bytes').firstMatch(output);
-      final pageSize = int.parse(pageSizeMatch!.group(1)!);
-
-      final freeMatch = RegExp(r'Pages free:\s+(\d+)').firstMatch(output);
-      final activeMatch = RegExp(r'Pages active:\s+(\d+)').firstMatch(output);
-      final inactiveMatch = RegExp(r'Pages inactive:\s+(\d+)').firstMatch(output);
-      final wiredMatch = RegExp(r'Pages wired down:\s+(\d+)').firstMatch(output);
-
-      final free = int.parse(freeMatch!.group(1)!);
-      final used = int.parse(activeMatch!.group(1)!) +
-          int.parse(inactiveMatch!.group(1)!) +
-          int.parse(wiredMatch!.group(1)!);
-
-      final total = free + used;
-
-      return ((used / total) * 100).round();
-    } catch (_) {
-      return 0;
-    }
-  }
-
-  /// ✅ Disk Usage
   @override
   Future<int> getDiskUsage() async {
     try {
@@ -71,13 +51,13 @@ class MacMonitor implements SystemMonitor {
       if (lines.length < 2) return 0;
 
       final parts = lines[1].split(RegExp(r'\s+'));
+      if (parts.length < 5) return 0;
       return int.tryParse(parts[4].replaceAll('%', '')) ?? 0;
     } catch (_) {
       return 0;
     }
   }
 
-  /// ✅ Network Speed (same logic as Linux)
   double _lastRx = 0;
   double _lastTx = 0;
   double _lastTime = 0;
@@ -85,10 +65,7 @@ class MacMonitor implements SystemMonitor {
   @override
   Future<Map<String, String>> getNetworkSpeed() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "netstat -ib"
-      ]);
+      final result = await Process.run('bash', ['-c', "netstat -ib"]);
 
       final output = result.stdout.toString();
       final lines = output.split('\n');
@@ -97,7 +74,7 @@ class MacMonitor implements SystemMonitor {
       double tx = 0;
 
       for (var line in lines) {
-        if (line.contains('en0')) { // WiFi interface
+        if (line.contains('en0')) {
           final parts = line.split(RegExp(r'\s+'));
 
           if (parts.length > 10) {
@@ -113,12 +90,10 @@ class MacMonitor implements SystemMonitor {
         _lastRx = rx;
         _lastTx = tx;
         _lastTime = now;
-
         return {"download": "0 Kbps", "upload": "0 Kbps"};
       }
 
       final timeDiff = now - _lastTime;
-
       if (timeDiff <= 0) {
         return {"download": "0 Kbps", "upload": "0 Kbps"};
       }
@@ -150,53 +125,73 @@ class MacMonitor implements SystemMonitor {
     }
   }
 
-  /// ✅ Camera (basic check)
   @override
-  Future<bool> isCameraAvailable() async {
-    return true; // mac usually has camera
-  }
+  Future<bool> isCameraAvailable() async => true;
 
-  /// ✅ Mic
   @override
-  Future<bool> isMicAvailable() async {
-    return true;
-  }
+  Future<bool> isMicAvailable() async => true;
 
-  /// ✅ Speaker
   @override
-  Future<bool> isSpeakerAvailable() async {
-    return true;
-  }
+  Future<bool> isSpeakerAvailable() async => true;
 
-  /// ✅ Geo Location
   @override
   Future<Map<String, dynamic>> getGeoLocation() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "curl -s ipinfo.io/json"
-      ]);
+      final result = await Process.run(
+        '/usr/bin/curl',
+        ['-s', 'https://ipinfo.io/json'],
+      );
 
-      if (result.stdout.toString().isEmpty) {
-        return _defaultLocation();
+
+
+      final output = result.stdout.toString().trim();
+
+      if (output.isEmpty) {
+        return await _fallbackGeoLocation();
       }
 
-      final json = jsonDecode(result.stdout);
+      final json = jsonDecode(output);
 
-      final loc = json['loc'] ?? "0,0";
+      final loc = (json['loc'] ?? "0,0").toString();
       final parts = loc.split(',');
 
       return {
-        "city": json['city'] ?? '-',
-        "region": json['region'] ?? '-',
-        "country": json['country'] ?? '-',
-        "lat": parts[0],
-        "lon": parts[1],
+        "city": (json['city'] ?? '-').toString(),
+        "region": (json['region'] ?? '-').toString(),
+        "country": (json['country'] ?? '-').toString(),
+        "lat": parts.isNotEmpty ? parts[0] : "0",
+        "lon": parts.length > 1 ? parts[1] : "0",
+      };
+    } catch (_) {
+      return await _fallbackGeoLocation();
+    }
+  }
+
+  Future<Map<String, dynamic>> _fallbackGeoLocation() async {
+    try {
+      final result = await Process.run(
+        'bash',
+        ['-c', "curl -s --max-time 3 http://ip-api.com/json"],
+      );
+
+      final output = result.stdout.toString().trim();
+
+      if (output.isEmpty) return _defaultLocation();
+
+      final json = jsonDecode(output);
+
+      return {
+        "city": (json['city'] ?? '-').toString(),
+        "region": (json['regionName'] ?? '-').toString(),
+        "country": (json['country'] ?? '-').toString(),
+        "lat": (json['lat'] ?? 0).toString(),
+        "lon": (json['lon'] ?? 0).toString(),
       };
     } catch (_) {
       return _defaultLocation();
     }
   }
+
 
   Map<String, dynamic> _defaultLocation() {
     return {
@@ -208,21 +203,16 @@ class MacMonitor implements SystemMonitor {
     };
   }
 
-  /// ✅ App Usage (mac version)
   @override
   Future<List<Map<String, dynamic>>> getAppUsage() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "ps -eo comm,lstart"
-      ]);
+      final result = await Process.run('bash', ['-c', "ps -eo comm,lstart"]);
 
       final output = result.stdout.toString().trim();
       if (output.isEmpty) return [];
 
       final now = DateTime.now();
       final lines = output.split('\n');
-
       final Map<String, Map<String, dynamic>> appMap = {};
 
       for (var i = 1; i < lines.length; i++) {
@@ -230,12 +220,9 @@ class MacMonitor implements SystemMonitor {
         if (parts.length < 6) continue;
 
         final name = parts[0];
-
-        final dateStr =
-            "${parts[1]} ${parts[2]} ${parts[3]} ${parts[4]} ${parts[5]}";
+        final dateStr = "${parts[1]} ${parts[2]} ${parts[3]} ${parts[4]} ${parts[5]}";
 
         DateTime? startTime;
-
         try {
           startTime = DateTime.parse(_convertMacDate(dateStr));
         } catch (_) {
@@ -246,23 +233,18 @@ class MacMonitor implements SystemMonitor {
 
         if (appMap.containsKey(name)) {
           final existing = appMap[name]!;
-
-          final existingStart =
-          DateTime.parse(existing["From"]["DateTime"]);
+          final existingStart = DateTime.parse(existing["From"]["DateTime"]);
 
           if (startTime.isBefore(existingStart)) {
             existing["From"]["DateTime"] = startTime.toString();
           }
 
-          final newDuration = now.difference(
-              DateTime.parse(existing["From"]["DateTime"]));
-
+          final newDuration = now.difference(DateTime.parse(existing["From"]["DateTime"]));
           existing["Duration"] = {
             "Days": newDuration.inDays,
             "Hours": newDuration.inHours % 24,
             "Minutes": newDuration.inMinutes % 60,
           };
-
         } else {
           appMap[name] = {
             "Name": name,
@@ -278,16 +260,9 @@ class MacMonitor implements SystemMonitor {
       }
 
       final apps = appMap.values.toList();
-
       apps.sort((a, b) {
-        final da = a['Duration']['Days'] * 86400 +
-            a['Duration']['Hours'] * 3600 +
-            a['Duration']['Minutes'] * 60;
-
-        final db = b['Duration']['Days'] * 86400 +
-            b['Duration']['Hours'] * 3600 +
-            b['Duration']['Minutes'] * 60;
-
+        final da = a['Duration']['Days'] * 86400 + a['Duration']['Hours'] * 3600 + a['Duration']['Minutes'] * 60;
+        final db = b['Duration']['Days'] * 86400 + b['Duration']['Hours'] * 3600 + b['Duration']['Minutes'] * 60;
         return db.compareTo(da);
       });
 
@@ -297,27 +272,30 @@ class MacMonitor implements SystemMonitor {
     }
   }
 
-  /// ✅ Date converter (Mac)
   String _convertMacDate(String input) {
     final parts = input.split(' ');
+    if (parts.length < 5) return "1970-01-01 00:00:00";
 
     final monthMap = {
-      "Jan": "01",
-      "Feb": "02",
-      "Mar": "03",
-      "Apr": "04",
-      "May": "05",
-      "Jun": "06",
-      "Jul": "07",
-      "Aug": "08",
-      "Sep": "09",
-      "Oct": "10",
-      "Nov": "11",
-      "Dec": "12",
+      "Jan": "01", "Feb": "02", "Mar": "03", "Apr": "04", "May": "05", "Jun": "06",
+      "Jul": "07", "Aug": "08", "Sep": "09", "Oct": "10", "Nov": "11", "Dec": "12",
     };
 
     final month = monthMap[parts[1]] ?? "01";
-
-    return "${parts[4]}-$month-${parts[2]} ${parts[3]}";
+    final day = parts[2].padLeft(2, '0');
+    return "${parts[4]}-$month-$day ${parts[3]}";
   }
+
+  @override
+  Future<String> getGpuName() async {
+    try {
+      final String name = await _channel.invokeMethod('getGpuName');
+      return name;
+    } catch (_) {
+      return "Unknown";
+    }
+  }
+
+
+
 }

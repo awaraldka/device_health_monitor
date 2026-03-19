@@ -1,4 +1,5 @@
-import 'package:device_health_monitor/models/app_usage.dart';
+
+import 'app_usage.dart';
 
 class SystemStatus {
   final int cpuUsage;
@@ -12,7 +13,7 @@ class SystemStatus {
   final double temperature;
   final String osName;
   final String deviceName;
-  final int batteryLevel;
+  final String batteryLevel;
   final String batteryStatus;
 
   // Additional Information

@@ -1,11 +1,11 @@
 {
-    "name": "device_health_monitor",
-    "short_name": "device_health_monitor",
+    "name": "dhm",
+    "short_name": "dhm",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Device Health Monitor",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

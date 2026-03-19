@@ -98,6 +98,9 @@ class _MonitorDashboardState extends State<MonitorDashboard>
           cpuHistory.add(status.cpuUsage);
           if (cpuHistory.length > 20) cpuHistory.removeAt(0);
 
+          // Safe parsing of battery level
+          final int battery = int.tryParse(status.batteryLevel.replaceAll('%', '')) ?? 0;
+
           return Padding(
             padding: const EdgeInsets.all(24.0),
             child: SingleChildScrollView(
@@ -132,16 +135,17 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                         color:
                         status.ramUsage > 80 ? Colors.red : Colors.orange,
                       ),
+
                       MetricCard(
                         title: 'Battery',
-                        value: '${status.batteryLevel}%',
-                        percentage: status.batteryLevel / 100,
-                        icon: status.batteryLevel > 20
-                            ? Icons.battery_full
-                            : Icons.battery_alert,
-                        color: status.batteryLevel > 20
-                            ? Colors.green
-                            : Colors.red,
+                        value: battery > 0 ? status.batteryLevel : 'Desktop',
+                        percentage: battery > 0 ? battery / 100 : 1.0,
+                        icon: battery > 0
+                            ? (battery > 20 ? Icons.battery_full : Icons.battery_alert)
+                            : Icons.power,
+                        color: battery > 0
+                            ? (battery > 20 ? Colors.green : Colors.red)
+                            : Colors.blue,
                       ),
                       MetricCard(
                         title: 'Download',

@@ -9,6 +9,7 @@ abstract class SystemMonitor {
   Future<bool> isSpeakerAvailable();
   Future<Map<String, dynamic>>  getGeoLocation();
   Future<List<Map<String, dynamic>>> getAppUsage();
+  Future<String> getGpuName();
 
 
 }

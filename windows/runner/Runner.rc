@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.health" "\0"
-            VALUE "FileDescription", "device_health_monitor" "\0"
+            VALUE "CompanyName", "com.device.dhm" "\0"
+            VALUE "FileDescription", "dhm" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "device_health_monitor" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.health. All rights reserved." "\0"
-            VALUE "OriginalFilename", "device_health_monitor.exe" "\0"
-            VALUE "ProductName", "device_health_monitor" "\0"
+            VALUE "InternalName", "dhm" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.device.dhm. All rights reserved." "\0"
+            VALUE "OriginalFilename", "dhm.exe" "\0"
+            VALUE "ProductName", "dhm" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

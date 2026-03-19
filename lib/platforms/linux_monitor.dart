@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import '../core/system_monitor.dart';
 
 class LinuxMonitor implements SystemMonitor {
@@ -68,29 +69,47 @@ class LinuxMonitor implements SystemMonitor {
   double _lastRx = 0;
   double _lastTx = 0;
   double _lastTime = 0;
+  String? _activeInterface;
+
+  Future<String?> _getActiveInterface() async {
+    final result = await Process.run('bash', [
+      '-c',
+      "ip route | grep default"
+    ]);
+
+    final output = result.stdout.toString();
+    final match = RegExp(r'dev (\S+)').firstMatch(output);
+
+    return match?.group(1);
+  }
 
   @override
   Future<Map<String, String>> getNetworkSpeed() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "cat /proc/net/dev"
-      ]);
+      // detect active interface once
+      _activeInterface ??= await _getActiveInterface();
 
-      final output = result.stdout.toString();
-
-      final lines = output.split('\n');
+      final result = await Process.run('cat', ['/proc/net/dev']);
+      final lines = result.stdout.toString().split('\n');
 
       double rx = 0;
       double tx = 0;
 
       for (var line in lines) {
-        if (line.contains('eth0') || line.contains('wlan0')) {
-          final parts = line.split(RegExp(r'\s+'));
+        if (!line.contains(':')) continue;
 
-          rx += double.tryParse(parts[1]) ?? 0;
-          tx += double.tryParse(parts[9]) ?? 0;
-        }
+        final parts = line
+            .split(RegExp(r'\s+'))
+            .where((e) => e.isNotEmpty)
+            .toList();
+
+        final iface = parts[0].replaceAll(':', '');
+
+        // only use active interface
+        if (iface != _activeInterface) continue;
+
+        rx = double.tryParse(parts[1]) ?? 0;
+        tx = double.tryParse(parts[9]) ?? 0;
       }
 
       final now = DateTime.now().millisecondsSinceEpoch / 1000;
@@ -126,13 +145,22 @@ class LinuxMonitor implements SystemMonitor {
         "download": _formatSpeed(downloadBytesPerSec),
         "upload": _formatSpeed(uploadBytesPerSec),
       };
-
     } catch (e) {
       return {
         "download": "0 Kbps",
         "upload": "0 Kbps",
       };
     }
+  }
+
+  String _formatSpeed(double bytesPerSec) {
+    double bitsPerSec = bytesPerSec * 8;
+
+    if (bitsPerSec < 1024) return "${bitsPerSec.toStringAsFixed(2)} bps";
+    if (bitsPerSec < 1024 * 1024) {
+      return "${(bitsPerSec / 1024).toStringAsFixed(2)} Kbps";
+    }
+    return "${(bitsPerSec / (1024 * 1024)).toStringAsFixed(2)} Mbps";
   }
 
   /// ✅ Camera
@@ -168,30 +196,26 @@ class LinuxMonitor implements SystemMonitor {
     }
   }
 
-  /// ✅ Geo Location
   @override
   Future<Map<String, dynamic>> getGeoLocation() async {
     try {
-      final result = await Process.run('bash', [
-        '-c',
-        "curl -s ipinfo.io/json"
-      ]);
+      final result = await Process.run(
+        'bash',
+        ['-c', "curl -s --max-time 5 http://ip-api.com/json"],
+      );
 
-      if (result.stdout.toString().isEmpty) {
-        return _defaultLocation();
-      }
+      final output = result.stdout.toString().trim();
 
-      final json = jsonDecode(result.stdout);
+      if (output.isEmpty) return _defaultLocation();
 
-      final loc = json['loc'] ?? "0,0";
-      final parts = loc.split(',');
+      final json = jsonDecode(output);
 
       return {
-        "city": json['city'] ?? '-',
-        "region": json['region'] ?? '-',
-        "country": json['country'] ?? '-',
-        "lat": parts[0],
-        "lon": parts[1],
+        "city": (json['city'] ?? '-').toString(),
+        "region": (json['regionName'] ?? '-').toString(),
+        "country": (json['country'] ?? '-').toString(),
+        "lat": (json['lat'] ?? 0).toString(),
+        "lon": (json['lon'] ?? 0).toString(),
       };
     } catch (_) {
       return _defaultLocation();
@@ -282,39 +306,33 @@ class LinuxMonitor implements SystemMonitor {
     return false;
   }
 
-  /// ✅ Date converter
-  String _convertLinuxDate(String input) {
-    final parts = input.split(' ');
+  @override
+  Future<String> getGpuName() async {
+    try {
+      final result = await Process.run('bash', [
+        '-c',
+        "lspci | grep -i 'vga\\|3d\\|2d'"
+      ]);
 
-    final monthMap = {
-      "Jan": "01",
-      "Feb": "02",
-      "Mar": "03",
-      "Apr": "04",
-      "May": "05",
-      "Jun": "06",
-      "Jul": "07",
-      "Aug": "08",
-      "Sep": "09",
-      "Oct": "10",
-      "Nov": "11",
-      "Dec": "12",
-    };
+      final output = result.stdout.toString().trim();
 
-    final month = monthMap[parts[1]] ?? "01";
-
-    return "${parts[4]}-$month-${parts[2]} ${parts[3]}";
-  }
+      if (output.isEmpty) return "Unknown GPU";
 
 
-  String _formatSpeed(double bytesPerSec) {
-    double kb = bytesPerSec / 1024;
-    double mb = kb / 1024;
+      final lines = output.split('\n');
+      final gpuNames = lines.map((line) {
+        final parts = line.split(':');
+        if (parts.length > 2) {
+          return parts.sublist(2).join(':').trim();
+        }
+        return line;
+      }).toList();
 
-    if (mb >= 1) {
-      return "${mb.toStringAsFixed(1)} Mbps";
-    } else {
-      return "${kb.toStringAsFixed(1)} Kbps";
+      return gpuNames.join(', ');
+    } catch (e) {
+      return "Unknown GPU";
     }
   }
+
+
 }

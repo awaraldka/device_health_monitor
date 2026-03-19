@@ -1,24 +1,22 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:device_health_monitor/models/app_usage.dart';
-import 'package:device_health_monitor/screens/login_screen.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_device_info_plus/flutter_device_info_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/monitor_factory.dart';
+import '../models/app_usage.dart';
 import '../models/system_status.dart';
+import '../screens/login_screen.dart';
 
 class SystemMonitorService {
   final FlutterDeviceInfoPlus _deviceInfoPlugin = const FlutterDeviceInfoPlus();
   final Connectivity _connectivity = Connectivity();
 
   static final SystemMonitorService _instance =
-  SystemMonitorService._internal();
+      SystemMonitorService._internal();
 
   factory SystemMonitorService() => _instance;
 
@@ -27,13 +25,9 @@ class SystemMonitorService {
   final monitor = MonitorFactory.create();
 
   final StreamController<SystemStatus> _controller =
-  StreamController<SystemStatus>.broadcast();
-
-
-
+      StreamController<SystemStatus>.broadcast();
 
   SystemStatus? _cachedStatus;
-
 
   SystemStatus? get cachedStatus => _cachedStatus;
 
@@ -50,7 +44,6 @@ class SystemMonitorService {
 
     return _controller.stream;
   }
-
 
   void _init() {
     if (_timer != null) return;
@@ -72,7 +65,7 @@ class SystemMonitorService {
       _cachedStatus = status;
       _controller.add(status);
     } catch (e) {
-      print("Error: $e");
+      debugPrint("Error in _fetchAndEmit: $e");
       if (_cachedStatus != null) {
         _controller.add(_cachedStatus!);
       }
@@ -81,6 +74,7 @@ class SystemMonitorService {
 
   Future<SystemStatus> getSystemStatus() async {
     final info = await _deviceInfoPlugin.getDeviceInfo();
+
 
     final cpu = await monitor.getCpuUsage();
     final ram = await monitor.getRamUsage();
@@ -95,49 +89,38 @@ class SystemMonitorService {
     final geo = await monitor.getGeoLocation();
 
     final appUsage = await monitor.getAppUsage();
-    final apps = appUsage
-        .map((e) => AppUsageData.fromMap(e))
-        .toList();
+    final gpuName =  await monitor.getGpuName();
 
-
-
+    final apps = appUsage.map((e) => AppUsageData.fromMap(e)).toList();
 
     final connectivityResult = await _connectivity.checkConnectivity();
     bool isInternetConnected =
-    !connectivityResult.contains(ConnectivityResult.none);
+        !connectivityResult.contains(ConnectivityResult.none);
 
     return SystemStatus(
       cpuUsage: cpu,
       ramUsage: ram,
       diskUsage: disk,
-
       cpuName: info.processorInfo.processorName,
-      gpuName: "GPU",
-
+      gpuName: gpuName,
       downloadSpeed: networkSpeed.containsKey('download')
           ? double.tryParse(networkSpeed['download']!.split(' ')[0]) ?? 0
           : 0,
-
       uploadSpeed: networkSpeed.containsKey('upload')
           ? double.tryParse(networkSpeed['upload']!.split(' ')[0]) ?? 0
           : 0,
-
       isConnected: isInternetConnected,
-      temperature: info.batteryInfo!.batteryTemperature,
-
+      temperature: info.batteryInfo?.batteryTemperature ?? 0.0,
       osName: "${info.operatingSystem} ${info.systemVersion}",
       deviceName: Platform.localHostname,
-
-      batteryLevel: info.batteryInfo!.batteryLevel,
-      batteryStatus: info.batteryInfo!.chargingStatus,
-
+      batteryLevel: info.batteryInfo?.batteryLevel != null ? "${info.batteryInfo?.batteryLevel}%" : "Not Available",
+      batteryStatus: info.batteryInfo?.chargingStatus ?? "Not Available",
       additionalInfo: {
         'Computer Name': info.deviceName,
         'CPU Cores': info.processorInfo.coreCount.toString(),
         'Total RAM':
-        "${(info.memoryInfo.totalPhysicalMemory / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB",
-        'User Name':
-        Platform.environment['USERNAME'] ??
+            "${(info.memoryInfo.totalPhysicalMemory / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB",
+        'User Name': Platform.environment['USERNAME'] ??
             Platform.environment['USER'] ??
             'Unknown',
         'OS Build': info.systemVersion,
@@ -147,7 +130,6 @@ class SystemMonitorService {
         'Manufacturer': info.manufacturer,
         'Model': info.model,
       },
-
       locationInfo: {
         'Camera': camera ? 'Yes' : 'No',
         'Mic': mic ? 'Yes' : 'No',
@@ -159,9 +141,6 @@ class SystemMonitorService {
         'Longitude': geo['lon'] ?? '0',
       },
       appData: apps,
-
-
-
     );
   }
 
@@ -174,7 +153,7 @@ class SystemMonitorService {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
+      (route) => false,
     );
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/system_monitor_service.dart';
 import '../models/system_status.dart';
 import '../widgets/status_card.dart';

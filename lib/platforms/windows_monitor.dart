@@ -73,9 +73,30 @@ class WindowsMonitor implements SystemMonitor {
   double _lastSent = 0;
   double _lastTime = 0;
 
+  Future<String?> _getActiveAdapter() async {
+    try {
+      final result = await Process.run('powershell', [
+        '-Command',
+        'Get-NetAdapter | Where-Object {\$_.Status -eq "Up"} | '
+            'Select-Object -First 1 -ExpandProperty Name'
+      ]);
+
+      final output = result.stdout.toString().trim();
+
+      if (output.isEmpty) return null;
+
+      return output;
+    } catch (e) {
+      return null;
+    }
+  }
   @override
   Future<Map<String, String>> getNetworkSpeed() async {
-    const adapter = "Wi-Fi";
+    final adapter = await _getActiveAdapter();
+
+    if (adapter == null) {
+      return {"download": "0 Kbps", "upload": "0 Kbps"};
+    }
 
     try {
       final result = await Process.run('powershell', [
@@ -181,7 +202,7 @@ class WindowsMonitor implements SystemMonitor {
     try {
       final result = await Process.run('powershell', [
         '-Command',
-        "(Invoke-RestMethod ipinfo.io/json) | ConvertTo-Json"
+        "(Invoke-RestMethod http://ip-api.com/json) | ConvertTo-Json"
       ]);
 
       if (result.stdout == null || result.stdout.toString().trim().isEmpty) {
@@ -190,15 +211,12 @@ class WindowsMonitor implements SystemMonitor {
 
       final json = jsonDecode(result.stdout);
 
-      final loc = json['loc'] ?? "0,0";
-      final parts = loc.split(',');
-
       return {
         "city": json['city'] ?? 'Unknown',
-        "region": json['region'] ?? 'Unknown',
+        "region": json['regionName'] ?? 'Unknown',
         "country": json['country'] ?? 'Unknown',
-        "lat": parts[0],
-        "lon": parts[1],
+        "lat": (json['lat'] ?? 0).toString(),
+        "lon": (json['lon'] ?? 0).toString(),
       };
     } catch (e) {
       return _defaultLocation();
@@ -242,6 +260,27 @@ class WindowsMonitor implements SystemMonitor {
           : [Map<String, dynamic>.from(decoded)];
     } catch (_) {
       return [];
+    }
+  }
+
+  @override
+  Future<String> getGpuName() async {
+    try {
+      final result = await Process.run('powershell', [
+        '-Command',
+        'Get-WmiObject Win32_VideoController | '
+            'Select-Object -First 1 -ExpandProperty Name'
+      ]);
+
+      final output = result.stdout.toString().trim();
+
+      if (output.isEmpty) {
+        return "Unknown GPU";
+      }
+
+      return output;
+    } catch (e) {
+      return "Unknown GPU";
     }
   }
 
