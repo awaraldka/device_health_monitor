@@ -1,6 +1,6 @@
+import '../camera_test.dart';
 import '../hardware_test.dart';
 import '../hardware_tester.dart';
-import '../camera_test.dart';
 import '../microphone_test.dart';
 import '../speaker_test.dart';
 

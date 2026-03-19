@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_device_info_plus/flutter_device_info_plus.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/monitor_factory.dart';
@@ -75,27 +75,35 @@ class SystemMonitorService {
   Future<SystemStatus> getSystemStatus() async {
     final info = await _deviceInfoPlugin.getDeviceInfo();
 
+    // Parallelize monitoring tasks for faster dashboard loading
+    final results = await Future.wait([
+      monitor.getCpuUsage(),
+      monitor.getRamUsage(),
+      monitor.getDiskUsage(),
+      monitor.getNetworkSpeed(),
+      monitor.isCameraAvailable(),
+      monitor.isMicAvailable(),
+      monitor.isSpeakerAvailable(),
+      monitor.getGeoLocation(),
+      monitor.getAppUsage(),
+      monitor.getGpuName(),
+      _connectivity.checkConnectivity(),
+    ]);
 
-    final cpu = await monitor.getCpuUsage();
-    final ram = await monitor.getRamUsage();
-    final disk = await monitor.getDiskUsage();
-
-    final networkSpeed = await monitor.getNetworkSpeed();
-
-    final camera = await monitor.isCameraAvailable();
-    final mic = await monitor.isMicAvailable();
-    final speaker = await monitor.isSpeakerAvailable();
-
-    final geo = await monitor.getGeoLocation();
-
-    final appUsage = await monitor.getAppUsage();
-    final gpuName =  await monitor.getGpuName();
+    final int cpu = results[0] as int;
+    final int ram = results[1] as int;
+    final int disk = results[2] as int;
+    final Map<String, String> networkSpeed = results[3] as Map<String, String>;
+    final bool camera = results[4] as bool;
+    final bool mic = results[5] as bool;
+    final bool speaker = results[6] as bool;
+    final Map<String, dynamic> geo = results[7] as Map<String, dynamic>;
+    final List<Map<String, dynamic>> appUsage = results[8] as List<Map<String, dynamic>>;
+    final String gpuName = results[9] as String;
+    final List<ConnectivityResult> connectivityResult = results[10] as List<ConnectivityResult>;
 
     final apps = appUsage.map((e) => AppUsageData.fromMap(e)).toList();
-
-    final connectivityResult = await _connectivity.checkConnectivity();
-    bool isInternetConnected =
-        !connectivityResult.contains(ConnectivityResult.none);
+    bool isInternetConnected = !connectivityResult.contains(ConnectivityResult.none);
 
     return SystemStatus(
       cpuUsage: cpu,

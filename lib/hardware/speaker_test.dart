@@ -1,6 +1,8 @@
 import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+
 import 'hardware_test.dart';
 
 class SpeakerTest extends HardwareTest {

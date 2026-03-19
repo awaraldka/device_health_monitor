@@ -1,8 +1,9 @@
 import 'dart:io';
+
 import 'hardware_tester.dart';
-import 'impl/windows_hardware_tester.dart';
-import 'impl/mac_hardware_tester.dart';
 import 'impl/linux_hardware_tester.dart';
+import 'impl/mac_hardware_tester.dart';
+import 'impl/windows_hardware_tester.dart';
 
 class HardwareTesterFactory {
   static HardwareTester create() {

@@ -1,10 +1,10 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:camera/camera.dart';
+
+import '../hardware/camera_test.dart';
 import '../hardware/hardware_tester.dart';
 import '../hardware/hardware_tester_factory.dart';
-import '../hardware/camera_test.dart';
-import '../hardware/hardware_test.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -47,20 +47,30 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        // 1. Camera Test
+        final prefs = await SharedPreferences.getInstance();
+        final bool isHardwareVerified = prefs.getBool('isHardwareVerified') ?? false;
+
+        if (!isHardwareVerified) {
+          // 1. Camera Test
         setState(() {
           _currentCheck = 'Initializing Camera...';
           _activeCameraTest = _hardwareTester.cameraTest as CameraTest;
         });
         
         final camResult = await _activeCameraTest!.runTest();
-        if (!camResult.success) throw camResult.message;
+        final bool camStatus = camResult.success;
         
-        setState(() {
-          _currentCheck = 'Camera Active (Verification)';
-        });
-        // Give 3 seconds for the user to see the preview
-        await Future.delayed(const Duration(seconds: 3));
+        // If camera check fails (e.g. no camera found), we mark it but CONTINUE to next tests
+        if (!camStatus) {
+          debugPrint('Camera health check failed: ${camResult.message}');
+          // You could optionally set a flag here to show the user that camera is unhealthy
+        } else {
+          setState(() {
+            _currentCheck = 'Camera Active (Verification)';
+          });
+          // Give 3 seconds for the user to see the preview
+          await Future.delayed(const Duration(seconds: 3));
+        }
 
         // 2. Microphone Test
         setState(() {
@@ -68,21 +78,38 @@ class _LoginScreenState extends State<LoginScreen> {
           _activeCameraTest = null; // Close camera preview to focus on mic
         });
         final micResult = await _hardwareTester.microphoneTest.runTest();
-        if (!micResult.success) throw micResult.message;
-        
-        setState(() => _currentCheck = 'Microphone Verified');
-        await Future.delayed(const Duration(seconds: 1));
+        final bool micStatus = micResult.success;
+        if (!micStatus) {
+          debugPrint('Microphone health check failed: ${micResult.message}');
+        } else {
+          setState(() => _currentCheck = 'Microphone Verified');
+          await Future.delayed(const Duration(seconds: 1));
+        }
 
         // 3. Speaker Test
         setState(() => _currentCheck = 'Checking Speakers (Playing audio)...');
         final spkResult = await _hardwareTester.speakerTest.runTest();
-        if (!spkResult.success) throw spkResult.message;
-        
-        setState(() => _currentCheck = 'Hardware Verified. Logging in...');
-        await Future.delayed(const Duration(seconds: 1));
+        final bool spkStatus = spkResult.success;
+        if (!spkStatus) {
+          debugPrint('Speaker health check failed: ${spkResult.message}');
+        } else {
+          setState(() => _currentCheck = 'Hardware Verified. Logging in...');
+          await Future.delayed(const Duration(seconds: 1));
+        }
+
+          // Finalize checks
+          await prefs.setBool('cameraStatus', camStatus);
+          await prefs.setBool('micStatus', micStatus);
+          await prefs.setBool('speakerStatus', spkStatus);
+          await prefs.setBool('isHardwareVerified', true);
+        } else {
+          setState(() {
+            _currentCheck = 'Hardware already verified. Logging in...';
+          });
+          await Future.delayed(const Duration(seconds: 3));
+        }
 
         // Finalize Login
-        final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
 
         if (!mounted) return;

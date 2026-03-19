@@ -22,6 +22,7 @@ dependencies:
   http: ^0.13.6
   speed_test_port: ^1.0.4
   camera: ^0.11.1
+  camera_macos: ^0.0.9
   camera_windows: ^0.2.1+10
   record: ^4.4.4
   audioplayers: ^6.1.1

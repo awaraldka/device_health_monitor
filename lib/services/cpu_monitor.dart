@@ -1,4 +1,5 @@
 import 'dart:ffi';
+
 import 'package:ffi/ffi.dart';
 
 final dylib = DynamicLibrary.open('/usr/lib/libSystem.B.dylib');

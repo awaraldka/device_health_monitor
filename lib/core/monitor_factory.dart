@@ -1,7 +1,8 @@
 import 'dart:io';
-import '../platforms/windows_monitor.dart';
+
 import '../platforms/linux_monitor.dart';
 import '../platforms/mac_monitor.dart';
+import '../platforms/windows_monitor.dart';
 import 'system_monitor.dart';
 
 class MonitorFactory {

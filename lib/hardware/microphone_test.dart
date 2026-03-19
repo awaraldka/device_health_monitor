@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:record/record.dart';
-import 'package:path_provider/path_provider.dart';
+
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
+
 import 'hardware_test.dart';
 
 class MicrophoneTest extends HardwareTest {
@@ -35,14 +37,19 @@ class MicrophoneTest extends HardwareTest {
       }
 
       final Directory tempDir = await getTemporaryDirectory();
-      final String path = p.join(tempDir.path, 'test_audio.m4a');
+      final String filePath = p.join(tempDir.path, 'test_audio.m4a');
+      
+      // On macOS, the record package sometimes requires a file:// URL format
+      // to avoid 'NSInvalidArgumentException ... is not a file URL'
+      final String recordPath = Platform.isMacOS ? 'file://$filePath' : filePath;
 
-      // Simple recording for 3 seconds
-      await _recorder.start(path: path);
+      print("Start recording to: $recordPath");
+      await _recorder.start(path: recordPath);
       await Future.delayed(const Duration(seconds: 3));
       final String? resultPath = await _recorder.stop();
 
-      if (resultPath != null && await File(resultPath).exists()) {
+      // When checking for file existence, use the raw file path (without file://)
+      if (resultPath != null && await File(filePath).exists()) {
         _updateStatus(TestStatus.passed);
         return TestResult(success: true, message: "Audio recorded successfully");
       } else {
@@ -50,6 +57,7 @@ class MicrophoneTest extends HardwareTest {
         return TestResult(success: false, message: "Failed to record audio");
       }
     } catch (e) {
+      print("Microphone Test Error: $e");
       _updateStatus(TestStatus.failed);
       return TestResult(success: false, message: "Error: $e");
     }
