@@ -3,8 +3,12 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  audioplayers_windows
+  camera_windows
   connectivity_plus
   flutter_device_info_plus
+  permission_handler_windows
+  record_windows
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

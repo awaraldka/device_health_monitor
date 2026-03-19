@@ -6,12 +6,24 @@
 
 #include "generated_plugin_registrant.h"
 
+#include <audioplayers_windows/audioplayers_windows_plugin.h>
+#include <camera_windows/camera_windows.h>
 #include <connectivity_plus/connectivity_plus_windows_plugin.h>
 #include <flutter_device_info_plus/flutter_device_info_plus_plugin_c_api.h>
+#include <permission_handler_windows/permission_handler_windows_plugin.h>
+#include <record_windows/record_windows_plugin_c_api.h>
 
 void RegisterPlugins(flutter::PluginRegistry* registry) {
+  AudioplayersWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("AudioplayersWindowsPlugin"));
+  CameraWindowsRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("CameraWindows"));
   ConnectivityPlusWindowsPluginRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("ConnectivityPlusWindowsPlugin"));
   FlutterDeviceInfoPlusPluginCApiRegisterWithRegistrar(
       registry->GetRegistrarForPlugin("FlutterDeviceInfoPlusPluginCApi"));
+  PermissionHandlerWindowsPluginRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("PermissionHandlerWindowsPlugin"));
+  RecordWindowsPluginCApiRegisterWithRegistrar(
+      registry->GetRegistrarForPlugin("RecordWindowsPluginCApi"));
 }
