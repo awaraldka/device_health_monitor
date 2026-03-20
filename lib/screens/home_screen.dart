@@ -67,7 +67,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Battery: ${status.batteryLevel}% (${status.batteryStatus})',
+                  'Battery: ${status.batteryLevel} (${status.batteryStatus})',
                   style: TextStyle(color: Colors.grey[500], fontSize: 14),
                 ),
                 const SizedBox(height: 32),

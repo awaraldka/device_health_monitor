@@ -5,6 +5,13 @@ import '../models/system_status.dart';
 import '../services/system_monitor_service.dart';
 import '../widgets/metric_card.dart';
 
+enum SpeedTestPhase {
+  idle,
+  download,
+  upload,
+  done,
+}
+
 class MonitorDashboard extends StatefulWidget {
   const MonitorDashboard({super.key});
 
@@ -18,6 +25,26 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
   late AnimationController _controller;
   bool _isRefreshing = false;
+
+  List<double> downloadSamples = [];
+  List<double> uploadSamples = [];
+
+  double avgDownload = 0;
+  double avgUpload = 0;
+  bool isDownloadComplete = false;
+  bool isUploadComplete = false;
+  bool isBothComplete = false;
+
+  double? lastDownload;
+  double? lastUpload;
+  bool isAverageCalculated = false;
+
+  SpeedTestPhase phase = SpeedTestPhase.idle;
+
+  DateTime? phaseStartTime;
+
+  static const downloadDuration = Duration(seconds: 20);
+  static const uploadDuration = Duration(seconds: 20);
 
   @override
   void initState() {
@@ -42,6 +69,19 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
     _controller.repeat();
 
+    downloadSamples.clear();
+    uploadSamples.clear();
+
+    lastDownload = null;
+    lastUpload = null;
+
+    avgDownload = 0;
+    avgUpload = 0;
+
+    isAverageCalculated = false;
+
+    phase = SpeedTestPhase.download;
+    phaseStartTime = DateTime.now();
     await _monitorService.refreshNow();
 
     _controller.stop();
@@ -95,6 +135,42 @@ class _MonitorDashboardState extends State<MonitorDashboard>
             return const Center(child: CircularProgressIndicator());
           }
 
+          final now = DateTime.now();
+
+          if (phaseStartTime != null) {
+            final elapsed = now.difference(phaseStartTime!);
+            if (phase == SpeedTestPhase.download) {
+              if (status.downloadSpeed > 0 &&
+                  (lastDownload == null ||
+                      lastDownload != status.downloadSpeed)) {
+                downloadSamples.add(status.downloadSpeed);
+                lastDownload = status.downloadSpeed;
+              }
+
+              if (elapsed >= downloadDuration) {
+                phase = SpeedTestPhase.upload;
+                phaseStartTime = DateTime.now();
+              }
+            } else if (phase == SpeedTestPhase.upload) {
+              if (status.uploadSpeed > 0 &&
+                  (lastUpload == null ||
+                      lastUpload != status.uploadSpeed)) {
+                uploadSamples.add(status.uploadSpeed);
+                lastUpload = status.uploadSpeed;
+              }
+
+              if (elapsed >= uploadDuration) {
+                phase = SpeedTestPhase.done;
+              }
+            } else if (phase == SpeedTestPhase.done &&
+                !isAverageCalculated) {
+              isAverageCalculated = true;
+              avgDownload = calculateAverage(downloadSamples);
+              avgUpload = calculateAverage(uploadSamples);
+            }
+          }
+
+
           // Safe parsing of battery level
           final int battery = int.tryParse(status.batteryLevel.replaceAll('%', '')) ?? 0;
 
@@ -146,16 +222,18 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                       ),
                       MetricCard(
                         title: 'Download',
-                        value:
-                        '${status.downloadSpeed.toStringAsFixed(1)} Mbps',
+                        value: phase == SpeedTestPhase.done
+                            ? '${avgDownload.toStringAsFixed(1)} Mbps'
+                            : '${status.downloadSpeed.toStringAsFixed(1)} Mbps',
                         percentage: status.downloadSpeed / 100,
                         icon: Icons.download_sharp,
                         color: Colors.purple,
                       ),
                       MetricCard(
                         title: 'Upload',
-                        value:
-                        '${status.uploadSpeed.toStringAsFixed(1)} Mbps',
+                        value: phase == SpeedTestPhase.done
+                            ? '${avgUpload.toStringAsFixed(1)} Mbps'
+                            : '${status.uploadSpeed.toStringAsFixed(1)} Mbps',
                         percentage: status.uploadSpeed / 100,
                         icon: Icons.upload_sharp,
                         color: Colors.teal,
@@ -479,5 +557,19 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
 
 
+  double calculateAverage(List<double> samples) {
+    if (samples.isEmpty) {
+      return 0;
+    }
+    final sum = samples.reduce((a, b) => a + b);
+    final avg = sum / samples.length;
+    return avg;
+  }
+
+
 
 }
+
+
+
+

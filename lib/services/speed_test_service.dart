@@ -11,7 +11,7 @@ class SpeedTestService {
 
   /// Measures download speed in Mbps over a fixed [duration].
   /// Yields live updates periodically.
-  Stream<double> measureDownloadSpeed({Duration duration = const Duration(seconds: 10)}) async* {
+  Stream<double> measureDownloadSpeed({Duration duration = const Duration(seconds: 20)}) async* {
     final client = HttpClient();
     client.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
     client.connectionTimeout = const Duration(seconds: 5);
@@ -96,7 +96,7 @@ class SpeedTestService {
 
   /// Measures upload speed in Mbps over a fixed [duration].
   /// Yields live updates periodically.
-  Stream<double> measureUploadSpeed({Duration duration = const Duration(seconds: 10)}) async* {
+  Stream<double> measureUploadSpeed({Duration duration = const Duration(seconds: 20)}) async* {
     final client = HttpClient();
     client.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
     client.connectionTimeout = const Duration(seconds: 5);
