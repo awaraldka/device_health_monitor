@@ -38,6 +38,8 @@ class SystemMonitorService {
 
   bool _isSpeedTestRunning = false;
 
+  final List<int> _cpuUsageHistory = List.generate(30, (_) => 0);
+
   void _runSpeedTestsSequentially() async {
     if (_isSpeedTestRunning) return;
     _isSpeedTestRunning = true;
@@ -118,6 +120,12 @@ class SystemMonitorService {
     ]);
 
     final int cpu = results[0] as int;
+    
+    _cpuUsageHistory.add(cpu);
+    if (_cpuUsageHistory.length > 30) {
+      _cpuUsageHistory.removeAt(0);
+    }
+
     final int ram = results[1] as int;
     final int disk = results[2] as int;
     final Map<String, String> networkSpeed = results[3] as Map<String, String>;
@@ -134,16 +142,13 @@ class SystemMonitorService {
 
     return SystemStatus(
       cpuUsage: cpu,
+      cpuUsageHistory: List.from(_cpuUsageHistory),
       ramUsage: ram,
       diskUsage: disk,
       cpuName: info.processorInfo.processorName,
       gpuName: gpuName,
-      downloadSpeed: networkSpeed.containsKey('download')
-          ? double.tryParse(networkSpeed['download']!.split(' ')[0]) ?? 0
-          : 0,
-      uploadSpeed: networkSpeed.containsKey('upload')
-          ? double.tryParse(networkSpeed['upload']!.split(' ')[0]) ?? 0
-          : 0,
+      downloadSpeed: 0,
+      uploadSpeed:  0,
       isConnected: isInternetConnected,
       temperature: info.batteryInfo?.batteryTemperature ?? 0.0,
       osName: "${info.operatingSystem} ${info.systemVersion}",
@@ -182,6 +187,7 @@ class SystemMonitorService {
   Future<void> clickLogout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
+    await prefs.setBool('isHardwareVerified', false);
 
     if (!context.mounted) return;
 

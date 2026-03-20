@@ -3,6 +3,7 @@ import 'app_usage.dart';
 
 class SystemStatus {
   final int cpuUsage;
+  final List<int> cpuUsageHistory;
   final int ramUsage;
   final int diskUsage;
   final String cpuName;
@@ -23,6 +24,7 @@ class SystemStatus {
 
   SystemStatus({
     required this.cpuUsage,
+    required this.cpuUsageHistory,
     required this.ramUsage,
     required this.diskUsage,
     required this.cpuName,
@@ -49,6 +51,7 @@ class SystemStatus {
 
   SystemStatus copyWith({
     int? cpuUsage,
+    List<int>? cpuUsageHistory,
     int? ramUsage,
     int? diskUsage,
     String? cpuName,
@@ -67,6 +70,7 @@ class SystemStatus {
   }) {
     return SystemStatus(
       cpuUsage: cpuUsage ?? this.cpuUsage,
+      cpuUsageHistory: cpuUsageHistory ?? this.cpuUsageHistory,
       ramUsage: ramUsage ?? this.ramUsage,
       diskUsage: diskUsage ?? this.diskUsage,
       cpuName: cpuName ?? this.cpuName,

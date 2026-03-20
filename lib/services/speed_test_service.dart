@@ -3,30 +3,11 @@ import 'dart:io';
 import 'dart:typed_data';
 
 class SpeedTestService {
-  // Reliable and fast test URLs (Cloudflare defaults)
-  static const String _pingUrl = 'https://www.google.com/generate_204';
+
   static const String _downloadUrl = 'https://speedtest.mumbai1.linode.com/100MB-mumbai.bin'; // Faster regional server
   static const String _uploadUrl = 'https://speed.cloudflare.com/__up';
 
-  /// Measures ping in milliseconds doing an HTTP GET.
-  /// Returns -1 on failure.
-  Future<int> measurePing() async {
-    final client = HttpClient();
-    client.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
-    client.connectionTimeout = const Duration(seconds: 5);
-    try {
-      final stopwatch = Stopwatch()..start();
-      final request = await client.getUrl(Uri.parse(_pingUrl));
-      final response = await request.close();
-      await response.drain(); // Ensure full response is received
-      stopwatch.stop();
-      return stopwatch.elapsedMilliseconds;
-    } catch (_) {
-      return -1; // Indicates failure
-    } finally {
-      client.close(force: true);
-    }
-  }
+
 
   /// Measures download speed in Mbps over a fixed [duration].
   /// Yields live updates periodically.

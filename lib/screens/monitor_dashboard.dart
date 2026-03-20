@@ -15,7 +15,6 @@ class MonitorDashboard extends StatefulWidget {
 class _MonitorDashboardState extends State<MonitorDashboard>
     with TickerProviderStateMixin {
   final SystemMonitorService _monitorService = SystemMonitorService();
-  final List<int> cpuHistory = List.generate(20, (_) => 0);
 
   late AnimationController _controller;
   bool _isRefreshing = false;
@@ -96,9 +95,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
             return const Center(child: CircularProgressIndicator());
           }
 
-          cpuHistory.add(status.cpuUsage);
-          if (cpuHistory.length > 20) cpuHistory.removeAt(0);
-
           // Safe parsing of battery level
           final int battery = int.tryParse(status.batteryLevel.replaceAll('%', '')) ?? 0;
 
@@ -176,7 +172,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                         flex: 2,
                         child: Column(
                           children: [
-                            _buildChartSection('CPU Usage History'),
+                            _buildChartSection('CPU Usage History', status),
                             const SizedBox(height: 16),
                             _buildAdditionalInfo(status),
                           ],
@@ -268,7 +264,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     );
   }
 
-  Widget _buildChartSection(String title) {
+  Widget _buildChartSection(String title, SystemStatus status) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -290,7 +286,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                   borderData: FlBorderData(show: false),
                   lineBarsData: [
                     LineChartBarData(
-                      spots: cpuHistory.asMap().entries.map((e) {
+                      spots: status.cpuUsageHistory.asMap().entries.map((e) {
                         return FlSpot(
                           e.key.toDouble(),
                           e.value.toDouble(),
