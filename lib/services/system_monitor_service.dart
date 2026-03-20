@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:device_health_monitor/services/speed_test_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_device_info_plus/flutter_device_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,8 @@ import '../screens/login_screen.dart';
 class SystemMonitorService {
   final FlutterDeviceInfoPlus _deviceInfoPlugin = const FlutterDeviceInfoPlus();
   final Connectivity _connectivity = Connectivity();
+
+  final speedTest = SpeedTestService();
 
   static final SystemMonitorService _instance =
       SystemMonitorService._internal();
@@ -32,6 +35,29 @@ class SystemMonitorService {
   SystemStatus? get cachedStatus => _cachedStatus;
 
   Timer? _timer;
+
+  bool _isSpeedTestRunning = false;
+
+  void _runSpeedTestsSequentially() async {
+    if (_isSpeedTestRunning) return;
+    _isSpeedTestRunning = true;
+    try {
+      await for (final speed in speedTest.measureDownloadSpeed()) {
+        if (_cachedStatus != null) {
+          _cachedStatus = _cachedStatus!.copyWith(downloadSpeed: double.parse(speed.toStringAsFixed(2)));
+          _controller.add(_cachedStatus!);
+        }
+      }
+      await for (final speed in speedTest.measureUploadSpeed()) {
+        if (_cachedStatus != null) {
+          _cachedStatus = _cachedStatus!.copyWith(uploadSpeed: double.parse(speed.toStringAsFixed(2)));
+          _controller.add(_cachedStatus!);
+        }
+      }
+    } finally {
+      _isSpeedTestRunning = false;
+    }
+  }
 
   Stream<SystemStatus> getStatusStream() {
     _init();
@@ -64,6 +90,7 @@ class SystemMonitorService {
       final status = await getSystemStatus();
       _cachedStatus = status;
       _controller.add(status);
+      _runSpeedTestsSequentially();
     } catch (e) {
       debugPrint("Error in _fetchAndEmit: $e");
       if (_cachedStatus != null) {
