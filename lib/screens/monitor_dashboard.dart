@@ -135,6 +135,10 @@ class _MonitorDashboardState extends State<MonitorDashboard>
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (phase == SpeedTestPhase.idle) {
+            phase = SpeedTestPhase.download;
+            phaseStartTime = DateTime.now();
+          }
           final now = DateTime.now();
 
           if (phaseStartTime != null) {
