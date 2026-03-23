@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -31,17 +33,18 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
   double avgDownload = 0;
   double avgUpload = 0;
-  bool isDownloadComplete = false;
-  bool isUploadComplete = false;
-  bool isBothComplete = false;
+
+  double downloadSpeed = 0;
+  double uploadSpeed = 0;
+
 
   double? lastDownload;
   double? lastUpload;
-  bool isAverageCalculated = false;
 
   SpeedTestPhase phase = SpeedTestPhase.idle;
 
   DateTime? phaseStartTime;
+  Timer? _timer;
 
   static const downloadDuration = Duration(seconds: 20);
   static const uploadDuration = Duration(seconds: 20);
@@ -54,34 +57,75 @@ class _MonitorDashboardState extends State<MonitorDashboard>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
+
+    startSpeedTest();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _timer?.cancel();
     super.dispose();
+  }
+
+  /// 🚀 START SPEED TEST TIMER
+  void startSpeedTest() {
+    phase = SpeedTestPhase.download;
+    phaseStartTime = DateTime.now();
+
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      final now = DateTime.now();
+      final elapsed = now.difference(phaseStartTime!);
+
+      // DEBUG
+      debugPrint("$phase ,$elapsed");
+
+      if (phase == SpeedTestPhase.download) {
+        if (elapsed >= downloadDuration) {
+          phase = SpeedTestPhase.upload;
+          phaseStartTime = DateTime.now();
+        }
+      } else if (phase == SpeedTestPhase.upload) {
+        if (elapsed >= uploadDuration) {
+          phase = SpeedTestPhase.done;
+
+          avgDownload = calculateAverage(downloadSamples);
+          avgUpload = calculateAverage(uploadSamples);
+
+          debugPrint('Average Download: $avgDownload Mbps');
+          debugPrint('Average Upload: $avgUpload Mbps');
+
+          timer.cancel();
+        }
+      }
+
+      if (mounted) setState(() {});
+    });
   }
 
   Future<void> _handleRefresh() async {
     setState(() {
       _isRefreshing = true;
+      avgDownload = 0;
+      avgUpload = 0;
+      downloadSpeed=0;
+      uploadSpeed=0;
     });
 
     _controller.repeat();
 
+    // Reset everything
     downloadSamples.clear();
     uploadSamples.clear();
-
     lastDownload = null;
     lastUpload = null;
-
     avgDownload = 0;
     avgUpload = 0;
 
-    isAverageCalculated = false;
+    startSpeedTest();
 
-    phase = SpeedTestPhase.download;
-    phaseStartTime = DateTime.now();
     await _monitorService.refreshNow();
 
     _controller.stop();
@@ -117,11 +161,10 @@ class _MonitorDashboardState extends State<MonitorDashboard>
               child: const Icon(Icons.refresh),
             ),
           ),
-
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => SystemMonitorService().clickLogout(context),
-            tooltip: 'Logout',
+            onPressed: () =>
+                SystemMonitorService().clickLogout(context),
           ),
         ],
       ),
@@ -135,59 +178,45 @@ class _MonitorDashboardState extends State<MonitorDashboard>
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (phase == SpeedTestPhase.idle) {
-            phase = SpeedTestPhase.download;
-            phaseStartTime = DateTime.now();
-          }
-          final now = DateTime.now();
 
-          if (phaseStartTime != null) {
-            final elapsed = now.difference(phaseStartTime!);
-            if (phase == SpeedTestPhase.download) {
-              if (status.downloadSpeed > 0 &&
-                  (lastDownload == null ||
-                      lastDownload != status.downloadSpeed)) {
-                downloadSamples.add(status.downloadSpeed);
-                lastDownload = status.downloadSpeed;
-              }
 
-              if (elapsed >= downloadDuration) {
-                phase = SpeedTestPhase.upload;
-                phaseStartTime = DateTime.now();
-              }
-            } else if (phase == SpeedTestPhase.upload) {
-              if (status.uploadSpeed > 0 &&
-                  (lastUpload == null ||
-                      lastUpload != status.uploadSpeed)) {
-                uploadSamples.add(status.uploadSpeed);
-                lastUpload = status.uploadSpeed;
-              }
 
-              if (elapsed >= uploadDuration) {
-                phase = SpeedTestPhase.done;
-              }
-            } else if (phase == SpeedTestPhase.done &&
-                !isAverageCalculated) {
-              isAverageCalculated = true;
-              avgDownload = calculateAverage(downloadSamples);
-              avgUpload = calculateAverage(uploadSamples);
+
+          /// ✅ Collect samples ONLY (no timing logic here)
+          if (phase == SpeedTestPhase.download) {
+            if (status.downloadSpeed > 0 &&
+                (lastDownload == null ||
+                    lastDownload != status.downloadSpeed)) {
+              downloadSpeed = status.downloadSpeed;
+              downloadSamples.add(status.downloadSpeed);
+              lastDownload = status.downloadSpeed;
             }
           }
 
+          if (phase == SpeedTestPhase.upload) {
+            if (status.uploadSpeed > 0 &&
+                (lastUpload == null ||
+                    lastUpload != status.uploadSpeed)) {
 
-          // Safe parsing of battery level
-          final int battery = int.tryParse(status.batteryLevel.replaceAll('%', '')) ?? 0;
+              uploadSpeed = status.uploadSpeed;
+              uploadSamples.add(status.uploadSpeed);
+              lastUpload = status.uploadSpeed;
+            }
+          }
 
-          return Padding(
-            padding: const EdgeInsets.all(24.0),
+          final int battery =
+              int.tryParse(status.batteryLevel.replaceAll('%', '')) ?? 0;
+
+          return SafeArea(
             child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildHeader(status),
                   const SizedBox(height: 24),
 
-                  /// 📊 Metrics Grid
+                  /// GRID
                   GridView.count(
                     crossAxisCount:
                     MediaQuery.of(context).size.width > 1200 ? 5 : 2,
@@ -202,44 +231,40 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                         value: '${status.cpuUsage}%',
                         percentage: status.cpuUsage / 100,
                         icon: Icons.developer_board,
-                        color: status.cpuUsage > 80 ? Colors.red : Colors.blue,
+                        color: Colors.blue,
                       ),
                       MetricCard(
                         title: 'RAM Usage',
                         value: '${status.ramUsage}%',
                         percentage: status.ramUsage / 100,
                         icon: Icons.memory,
-                        color:
-                        status.ramUsage > 80 ? Colors.red : Colors.orange,
+                        color: Colors.orange,
                       ),
-
                       MetricCard(
                         title: 'Battery',
-                        value: battery > 0 ? status.batteryLevel : 'Desktop',
-                        percentage: battery > 0 ? battery / 100 : 1.0,
-                        icon: battery > 0
-                            ? (battery > 20 ? Icons.battery_full : Icons.battery_alert)
-                            : Icons.power,
-                        color: battery > 0
-                            ? (battery > 20 ? Colors.green : Colors.red)
-                            : Colors.blue,
+                        value: battery > 0
+                            ? status.batteryLevel
+                            : 'Desktop',
+                        percentage: battery > 0 ? battery / 100 : 1,
+                        icon: Icons.battery_full,
+                        color: Colors.green,
                       ),
                       MetricCard(
                         title: 'Download',
                         value: phase == SpeedTestPhase.done
                             ? '${avgDownload.toStringAsFixed(1)} Mbps'
-                            : '${status.downloadSpeed.toStringAsFixed(1)} Mbps',
+                            : '${downloadSpeed.toStringAsFixed(1)} Mbps',
                         percentage: status.downloadSpeed / 100,
-                        icon: Icons.download_sharp,
+                        icon: Icons.download,
                         color: Colors.purple,
                       ),
                       MetricCard(
                         title: 'Upload',
                         value: phase == SpeedTestPhase.done
                             ? '${avgUpload.toStringAsFixed(1)} Mbps'
-                            : '${status.uploadSpeed.toStringAsFixed(1)} Mbps',
+                            : '${uploadSpeed.toStringAsFixed(1)} Mbps',
                         percentage: status.uploadSpeed / 100,
-                        icon: Icons.upload_sharp,
+                        icon: Icons.upload,
                         color: Colors.teal,
                       ),
                     ],
@@ -247,11 +272,13 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
                   const SizedBox(height: 24),
 
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  /// MAIN ROW (FIXED OVERFLOW)
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
                     children: [
-                      Expanded(
-                        flex: 2,
+                      SizedBox(
+                        width: 500,
                         child: Column(
                           children: [
                             _buildChartSection('CPU Usage History', status),
@@ -260,8 +287,8 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                           ],
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
+                      SizedBox(
+                        width: 300,
                         child: Column(
                           children: [
                             _buildHardwareDetails(status),
@@ -270,21 +297,15 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                           ],
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            _buildAppUsage(status),
-                            const SizedBox(height: 16)
-                          ],
-                        ),
+                      SizedBox(
+                        width: 300,
+                        child: _buildAppUsage(status),
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 40),
                 ],
-
               ),
             ),
           );
@@ -292,6 +313,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
       ),
     );
   }
+
 
   Widget _buildHeader(SystemStatus status) {
     return Row(

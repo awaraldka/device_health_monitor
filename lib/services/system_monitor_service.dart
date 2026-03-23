@@ -79,7 +79,7 @@ class SystemMonitorService {
     _fetchAndEmit();
 
     // ✅ Fix: Changed from 1 hour to 3 seconds for real-time history and dashboard updates
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _timer = Timer.periodic(const Duration(hours: 1), (_) {
       _fetchAndEmit();
     });
   }
