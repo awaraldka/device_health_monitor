@@ -32,6 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _initPreviewCamera() async {
     try {
+      await _disposePreview();
+
       final cameras = await availableCameras();
 
       if (cameras.isEmpty) return;
@@ -57,8 +59,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _disposePreview() async {
-    await _previewController?.dispose();
-    _previewController = null;
+    if (_previewController != null) {
+      await _previewController!.dispose();
+      _previewController = null;
+    }
 
     if (!mounted) return;
 
@@ -70,6 +74,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     setState(() {
       _errorMessage = null;
+      _emailController.text =  "hestabit@gmail.com";
+      _passwordController.text = "Hestabit";
     });
 
     final String email = _emailController.text.trim();
@@ -93,15 +99,12 @@ class _LoginScreenState extends State<LoginScreen> {
             prefs.getBool('isHardwareVerified') ?? false;
 
         if (!isHardwareVerified) {
-          /// 1. Camera Test
+          /// 1. Camera Test (Checks and releases camera)
           setState(() {
             _currentCheck = 'Initializing Camera...';
             _activeCameraTest =
             _hardwareTester.cameraTest as CameraTest;
           });
-
-          /// 🔥 Start preview (UI only)
-          await _initPreviewCamera();
 
           final camResult = await _activeCameraTest!.runTest();
           final bool camStatus = camResult.success;
@@ -113,7 +116,10 @@ class _LoginScreenState extends State<LoginScreen> {
               _currentCheck = 'Camera Active (Verification)';
             });
 
-            await Future.delayed(const Duration(seconds: 3));
+            /// 🔥 Start preview (UI only) - AFTER test releases hardware
+            await _initPreviewCamera();
+
+            await Future.delayed(const Duration(seconds: 10));
           }
 
           /// 🔥 Stop preview before next tests

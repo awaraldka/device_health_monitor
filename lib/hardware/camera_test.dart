@@ -29,7 +29,6 @@ class CameraTest extends HardwareTest {
     try {
       await Future.delayed(const Duration(milliseconds: 300));
 
-      /// ✅ Get devices using WebRTC
       final devices = await navigator.mediaDevices.enumerateDevices();
       final cameras =
       devices.where((d) => d.kind == 'videoinput').toList();
@@ -42,13 +41,11 @@ class CameraTest extends HardwareTest {
         );
       }
 
-      /// 🔥 Try opening camera (REAL validation)
       final stream = await navigator.mediaDevices.getUserMedia({
         'audio': false,
         'video': true,
       });
 
-      // Stop immediately (we just test)
       stream.getTracks().forEach((t) => t.stop());
 
       _updateStatus(TestStatus.passed);
