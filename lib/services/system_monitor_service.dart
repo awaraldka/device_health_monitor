@@ -78,7 +78,8 @@ class SystemMonitorService {
 
     _fetchAndEmit();
 
-    _timer = Timer.periodic(const Duration(hours: 1), (_) {
+    // ✅ Fix: Changed from 1 hour to 3 seconds for real-time history and dashboard updates
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       _fetchAndEmit();
     });
   }
@@ -121,6 +122,7 @@ class SystemMonitorService {
 
     final int cpu = results[0] as int;
     
+    // ✅ Update CPU history
     _cpuUsageHistory.add(cpu);
     if (_cpuUsageHistory.length > 30) {
       _cpuUsageHistory.removeAt(0);
@@ -147,8 +149,8 @@ class SystemMonitorService {
       diskUsage: disk,
       cpuName: info.processorInfo.processorName,
       gpuName: gpuName,
-      downloadSpeed: 0,
-      uploadSpeed:  0,
+      downloadSpeed: _cachedStatus?.downloadSpeed ?? 0,
+      uploadSpeed:  _cachedStatus?.uploadSpeed ?? 0,
       isConnected: isInternetConnected,
       temperature: info.batteryInfo?.batteryTemperature ?? 0.0,
       osName: "${info.operatingSystem} ${info.systemVersion}",
