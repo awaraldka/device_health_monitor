@@ -23,8 +23,49 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMessage;
   bool _isChecking = false;
   String _currentCheck = '';
-  
+
   CameraTest? _activeCameraTest;
+
+  /// 🔥 NEW: Preview camera
+  CameraController? _previewController;
+  bool _isPreviewReady = false;
+
+  Future<void> _initPreviewCamera() async {
+    try {
+      final cameras = await availableCameras();
+
+      if (cameras.isEmpty) return;
+
+      final camera = cameras.first;
+
+      _previewController = CameraController(
+        camera,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+
+      await _previewController!.initialize();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isPreviewReady = true;
+      });
+    } catch (e) {
+      debugPrint("Preview camera error: $e");
+    }
+  }
+
+  Future<void> _disposePreview() async {
+    await _previewController?.dispose();
+    _previewController = null;
+
+    if (!mounted) return;
+
+    setState(() {
+      _isPreviewReady = false;
+    });
+  }
 
   Future<void> _login() async {
     setState(() {
@@ -48,68 +89,81 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         final prefs = await SharedPreferences.getInstance();
-        final bool isHardwareVerified = prefs.getBool('isHardwareVerified') ?? false;
+        final bool isHardwareVerified =
+            prefs.getBool('isHardwareVerified') ?? false;
 
         if (!isHardwareVerified) {
-          // 1. Camera Test
-        setState(() {
-          _currentCheck = 'Initializing Camera...';
-          _activeCameraTest = _hardwareTester.cameraTest as CameraTest;
-        });
-        
-        final camResult = await _activeCameraTest!.runTest();
-        final bool camStatus = camResult.success;
-        
-        // If camera check fails (e.g. no camera found), we mark it but CONTINUE to next tests
-        if (!camStatus) {
-          debugPrint('Camera health check failed: ${camResult.message}');
-          // You could optionally set a flag here to show the user that camera is unhealthy
-        } else {
+          /// 1. Camera Test
           setState(() {
-            _currentCheck = 'Camera Active (Verification)';
+            _currentCheck = 'Initializing Camera...';
+            _activeCameraTest =
+            _hardwareTester.cameraTest as CameraTest;
           });
-          // Give 3 seconds for the user to see the preview
-          await Future.delayed(const Duration(seconds: 3));
-        }
 
-        // 2. Microphone Test
-        setState(() {
-          _currentCheck = 'Checking Microphone (Recording 3s)...';
-          _activeCameraTest = null; // Close camera preview to focus on mic
-        });
-        final micResult = await _hardwareTester.microphoneTest.runTest();
-        final bool micStatus = micResult.success;
-        if (!micStatus) {
-          debugPrint('Microphone health check failed: ${micResult.message}');
-        } else {
-          setState(() => _currentCheck = 'Microphone Verified');
-          await Future.delayed(const Duration(seconds: 1));
-        }
+          /// 🔥 Start preview (UI only)
+          await _initPreviewCamera();
 
-        // 3. Speaker Test
-        setState(() => _currentCheck = 'Checking Speakers (Playing audio)...');
-        final spkResult = await _hardwareTester.speakerTest.runTest();
-        final bool spkStatus = spkResult.success;
-        if (!spkStatus) {
-          debugPrint('Speaker health check failed: ${spkResult.message}');
-        } else {
-          setState(() => _currentCheck = 'Hardware Verified. Logging in...');
-          await Future.delayed(const Duration(seconds: 1));
-        }
+          final camResult = await _activeCameraTest!.runTest();
+          final bool camStatus = camResult.success;
 
-          // Finalize checks
+          if (!camStatus) {
+            debugPrint('Camera health check failed: ${camResult.message}');
+          } else {
+            setState(() {
+              _currentCheck = 'Camera Active (Verification)';
+            });
+
+            await Future.delayed(const Duration(seconds: 3));
+          }
+
+          /// 🔥 Stop preview before next tests
+          await _disposePreview();
+
+          /// 2. Microphone Test
+          setState(() {
+            _currentCheck = 'Checking Microphone (Recording 3s)...';
+            _activeCameraTest = null;
+          });
+
+          final micResult = await _hardwareTester.microphoneTest.runTest();
+          final bool micStatus = micResult.success;
+
+          if (!micStatus) {
+            debugPrint(
+                'Microphone health check failed: ${micResult.message}');
+          } else {
+            setState(() => _currentCheck = 'Microphone Verified');
+            await Future.delayed(const Duration(seconds: 1));
+          }
+
+          /// 3. Speaker Test
+          setState(() =>
+          _currentCheck = 'Checking Speakers (Playing audio)...');
+
+          final spkResult = await _hardwareTester.speakerTest.runTest();
+          final bool spkStatus = spkResult.success;
+
+          if (!spkStatus) {
+            debugPrint(
+                'Speaker health check failed: ${spkResult.message}');
+          } else {
+            setState(() =>
+            _currentCheck = 'Hardware Verified. Logging in...');
+            await Future.delayed(const Duration(seconds: 1));
+          }
+
           await prefs.setBool('cameraStatus', camStatus);
           await prefs.setBool('micStatus', micStatus);
           await prefs.setBool('speakerStatus', spkStatus);
           await prefs.setBool('isHardwareVerified', true);
         } else {
           setState(() {
-            _currentCheck = 'Hardware already verified. Logging in...';
+            _currentCheck =
+            'Hardware already verified. Logging in...';
           });
           await Future.delayed(const Duration(seconds: 3));
         }
 
-        // Finalize Login
         await prefs.setBool('isLoggedIn', true);
 
         if (!mounted) return;
@@ -137,6 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _hardwareTester.cameraTest.dispose();
     _hardwareTester.microphoneTest.dispose();
     _hardwareTester.speakerTest.dispose();
+    _disposePreview();
     super.dispose();
   }
 
@@ -150,14 +205,18 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Center(
           child: SingleChildScrollView(
             child: Container(
-              constraints: BoxConstraints(maxWidth: _isChecking ? 500 : 450),
+              constraints:
+              BoxConstraints(maxWidth: _isChecking ? 500 : 450),
               child: Card(
                 elevation: 8,
                 margin: const EdgeInsets.all(20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
                 child: Padding(
                   padding: const EdgeInsets.all(32.0),
-                  child: _isChecking ? _buildCheckProgress() : _buildLoginForm(),
+                  child: _isChecking
+                      ? _buildCheckProgress()
+                      : _buildLoginForm(),
                 ),
               ),
             ),
@@ -168,8 +227,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildCheckProgress() {
-    bool hasCamera = _activeCameraTest?.controller?.value.isInitialized ?? false;
-    
+    bool hasCamera = _isPreviewReady && _previewController != null;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -179,12 +238,13 @@ class _LoginScreenState extends State<LoginScreen> {
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 24),
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF3F51B5), width: 2),
+              border: Border.all(
+                  color: const Color(0xFF3F51B5), width: 2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: CameraPreview(_activeCameraTest!.controller!),
+              child: CameraPreview(_previewController!),
             ),
           )
         else
@@ -194,13 +254,19 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         const Text(
           'Hardware Health Check',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF3F51B5)),
+          style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF3F51B5)),
         ),
         const SizedBox(height: 12),
         Text(
           _currentCheck,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+              fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -210,19 +276,25 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.lock_person_rounded, size: 64, color: Color(0xFF3F51B5)),
+        const Icon(Icons.lock_person_rounded,
+            size: 64, color: Color(0xFF3F51B5)),
         const SizedBox(height: 12),
         const Text(
           'System Login',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF3F51B5)),
+          style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF3F51B5)),
         ),
         const SizedBox(height: 24),
         TextField(
           controller: _emailController,
           decoration: InputDecoration(
             labelText: 'Email',
-            prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF3F51B5)),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            prefixIcon: const Icon(Icons.email_outlined,
+                color: Color(0xFF3F51B5)),
+            border:
+            OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
         const SizedBox(height: 16),
@@ -231,17 +303,23 @@ class _LoginScreenState extends State<LoginScreen> {
           obscureText: _isObscure,
           decoration: InputDecoration(
             labelText: 'Password',
-            prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF3F51B5)),
+            prefixIcon: const Icon(Icons.lock_outline,
+                color: Color(0xFF3F51B5)),
             suffixIcon: IconButton(
-              icon: Icon(_isObscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-              onPressed: () => setState(() => _isObscure = !_isObscure),
+              icon: Icon(_isObscure
+                  ? Icons.visibility_outlined
+                  : Icons.visibility_off_outlined),
+              onPressed: () =>
+                  setState(() => _isObscure = !_isObscure),
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            border:
+            OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
         if (_errorMessage != null) ...[
           const SizedBox(height: 12),
-          Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+          Text(_errorMessage!,
+              style: const TextStyle(color: Colors.red, fontSize: 13)),
         ],
         const SizedBox(height: 24),
         SizedBox(
@@ -252,9 +330,12 @@ class _LoginScreenState extends State<LoginScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF3F51B5),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('LOGIN', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            child: const Text('LOGIN',
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold)),
           ),
         ),
       ],

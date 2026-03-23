@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   camera_windows
   connectivity_plus
   flutter_device_info_plus
+  flutter_webrtc
   permission_handler_windows
   record_windows
 )

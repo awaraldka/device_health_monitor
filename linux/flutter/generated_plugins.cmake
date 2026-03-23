@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
   flutter_device_info_plus
+  flutter_webrtc
   record_linux
 )
 

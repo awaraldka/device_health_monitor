@@ -1,12 +1,14 @@
 import 'dart:async';
-import 'package:camera/camera.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'hardware_test.dart';
 
 class CameraTest extends HardwareTest {
   @override
   final String name = "Camera Test";
 
-  final StreamController<TestStatus> _statusController = StreamController<TestStatus>.broadcast();
+  final StreamController<TestStatus> _statusController =
+  StreamController<TestStatus>.broadcast();
+
   TestStatus _currentStatus = TestStatus.idle;
 
   @override
@@ -14,9 +16,6 @@ class CameraTest extends HardwareTest {
 
   @override
   TestStatus get currentStatus => _currentStatus;
-
-  CameraController? controller;
-  List<CameraDescription>? cameras;
 
   void _updateStatus(TestStatus status) {
     _currentStatus = status;
@@ -26,56 +25,50 @@ class CameraTest extends HardwareTest {
   @override
   Future<TestResult> runTest() async {
     _updateStatus(TestStatus.testing);
+
     try {
-      // Small delay to allow OS to recognize newly connected hardware
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      cameras = await availableCameras();
-      if (cameras == null || cameras!.isEmpty) {
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      /// ✅ Get devices using WebRTC
+      final devices = await navigator.mediaDevices.enumerateDevices();
+      final cameras =
+      devices.where((d) => d.kind == 'videoinput').toList();
+
+      if (cameras.isEmpty) {
         _updateStatus(TestStatus.failed);
-        return TestResult(success: false, message: "No cameras found. Please ensure your camera is connected and permissions are granted.");
+        return TestResult(
+          success: false,
+          message: "No cameras found",
+        );
       }
 
-      // Sort to prioritize external cameras
-      cameras!.sort((a, b) {
-        if (a.lensDirection == CameraLensDirection.external && b.lensDirection != CameraLensDirection.external) return -1;
-        if (a.lensDirection != CameraLensDirection.external && b.lensDirection == CameraLensDirection.external) return 1;
-        return 0;
+      /// 🔥 Try opening camera (REAL validation)
+      final stream = await navigator.mediaDevices.getUserMedia({
+        'audio': false,
+        'video': true,
       });
 
-      String lastError = "";
-      for (var camera in cameras!) {
-        try {
-          controller = CameraController(
-            camera, 
-            ResolutionPreset.medium,
-            enableAudio: false, // We test mic separately
-          );
+      // Stop immediately (we just test)
+      stream.getTracks().forEach((t) => t.stop());
 
-          await controller!.initialize();
+      _updateStatus(TestStatus.passed);
 
-          if (controller!.value.isInitialized) {
-            _updateStatus(TestStatus.passed);
-            return TestResult(success: true, message: "Camera initialized successfully");
-          }
-        } catch (e) {
-          lastError = e.toString();
-          controller?.dispose();
-          controller = null;
-        }
-      }
-
-      _updateStatus(TestStatus.failed);
-      return TestResult(success: false, message: "Camera failed to initialize. Last error: $lastError");
+      return TestResult(
+        success: true,
+        message: "Camera working: ${cameras.first.label}",
+      );
     } catch (e) {
       _updateStatus(TestStatus.failed);
-      return TestResult(success: false, message: "Error: $e");
+
+      return TestResult(
+        success: false,
+        message: "Camera error: $e",
+      );
     }
   }
 
   @override
   void dispose() {
-    controller?.dispose();
     _statusController.close();
   }
 }
