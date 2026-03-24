@@ -28,6 +28,11 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
   late AnimationController _controller;
   bool _isRefreshing = false;
+  
+  // Session Timer
+  final Stopwatch _sessionStopwatch = Stopwatch();
+  Timer? _sessionTimer;
+  String _formattedSessionTime = '00:00:00';
 
   final DatabaseService _databaseService = DatabaseService();
 
@@ -66,16 +71,50 @@ class _MonitorDashboardState extends State<MonitorDashboard>
       duration: const Duration(milliseconds: 800),
     );
 
-    // _databaseService.deleteAllSystemStats();
+    _sessionStopwatch.start();
+    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          final elapsed = _sessionStopwatch.elapsed;
+          final hours = elapsed.inHours.toString().padLeft(2, '0');
+          final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
+          final seconds = elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
+          _formattedSessionTime = '$hours:$minutes:$seconds';
+        });
+      }
+    });
 
+    _initializeDashboard();
+  }
+
+  Future<void> _initializeDashboard() async {
+    // await _databaseService.deleteAllSystemStats();
+    
+    // Start speed test
     startSpeedTest();
-    _databaseService.printLatestRecord();
+
+
+    
+    // Wait for first monitor service status to be available
+    await Future.delayed(const Duration(seconds: 1));
+    final status = _monitorService.cachedStatus;
+    if (status != null && !_isInitialDataSaved) {
+      await _databaseService.insertSystemStatus(status);
+      _isInitialDataSaved = true;
+      debugPrint("Initial system status saved to database.");
+    }
+
+    // Now it's safe to print
+    await _databaseService.printSize();
+    await _databaseService.printLatestRecord();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _timer?.cancel();
+    _sessionTimer?.cancel();
+    _sessionStopwatch.stop();
     super.dispose();
   }
 
@@ -89,9 +128,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       final now = DateTime.now();
       final elapsed = now.difference(phaseStartTime!);
-
-      // DEBUG
-      debugPrint("$phase ,$elapsed");
 
       if (phase == SpeedTestPhase.download) {
         if (elapsed >= downloadDuration) {
@@ -172,6 +208,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
+        leadingWidth: 100,
         title: const Text('Monitoring'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
@@ -364,6 +401,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
             ),
           ],
         ),
+
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(

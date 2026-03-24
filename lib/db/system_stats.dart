@@ -4,22 +4,22 @@ class SystemStats extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   // Usage
-  IntColumn get cpuUsage => integer()();
-  IntColumn get ramUsage => integer()();
-  IntColumn get diskUsage => integer()();
+  TextColumn get cpuUsage => text()();
+  TextColumn get ramUsage => text()();
+  TextColumn get diskUsage => text()();
 
   // Hardware
   TextColumn get cpuName => text()();
   TextColumn get gpuName => text()();
 
   // Network
-  RealColumn get downloadSpeed => real()();
-  RealColumn get uploadSpeed => real()();
+  TextColumn get downloadSpeed => text()();
+  TextColumn get uploadSpeed => text()();
 
-  BoolColumn get isConnected => boolean()();
+  TextColumn get isConnected => text()();
 
   // Temperature
-  RealColumn get temperature => real()();
+  TextColumn get temperature => text()();
 
   // System
   TextColumn get osName => text()();
@@ -31,7 +31,7 @@ class SystemStats extends Table {
 
   // Additional Info
   TextColumn get computerName => text()();
-  IntColumn get cpuCores => integer()();
+  TextColumn get cpuCores => text()();
   TextColumn get totalRam => text()();
   TextColumn get userName => text()();
 
@@ -44,17 +44,17 @@ class SystemStats extends Table {
   TextColumn get model => text()();
 
   // Hardware Checks
-  BoolColumn get camera => boolean()();
-  BoolColumn get mic => boolean()();
-  BoolColumn get speaker => boolean()();
+  TextColumn get camera => text()();
+  TextColumn get mic => text()();
+  TextColumn get speaker => text()();
 
   // Location
   TextColumn get city => text()();
   TextColumn get region => text()();
   TextColumn get country => text()();
 
-  RealColumn get longitude => real()();
-  RealColumn get latitude => real()();
+  TextColumn get longitude => text()();
+  TextColumn get latitude => text()();
 
   // App Usage
   TextColumn get appUsageData => text()();

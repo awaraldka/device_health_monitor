@@ -3,6 +3,7 @@ import 'package:device_health_monitor/models/system_status.dart';
 import 'package:drift/drift.dart';
 import 'dart:convert';
 import '../models/app_usage.dart';
+import 'encryption_service.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -19,45 +20,45 @@ class DatabaseService {
 
     await db.into(db.systemStats).insert(
       SystemStatsCompanion.insert(
-        cpuUsage: status.cpuUsage,
-        ramUsage: status.ramUsage,
-        diskUsage: status.diskUsage,
-        cpuName: status.cpuName,
-        gpuName: status.gpuName,
-        downloadSpeed: status.downloadSpeed,
-        uploadSpeed: status.uploadSpeed,
-        isConnected: status.isConnected,
-        temperature: status.temperature,
-        osName: status.osName,
-        deviceName: status.deviceName,
-        batteryLevel: status.batteryLevel,
-        batteryStatus: status.batteryStatus,
+        cpuUsage: EncryptionService.encryptInt(status.cpuUsage),
+        ramUsage: EncryptionService.encryptInt(status.ramUsage),
+        diskUsage: EncryptionService.encryptInt(status.diskUsage),
+        cpuName: EncryptionService.encrypt(status.cpuName),
+        gpuName: EncryptionService.encrypt(status.gpuName),
+        downloadSpeed: EncryptionService.encryptDouble(status.downloadSpeed),
+        uploadSpeed: EncryptionService.encryptDouble(status.uploadSpeed),
+        isConnected: EncryptionService.encryptBool(status.isConnected),
+        temperature: EncryptionService.encryptDouble(status.temperature),
+        osName: EncryptionService.encrypt(status.osName),
+        deviceName: EncryptionService.encrypt(status.deviceName),
+        batteryLevel: EncryptionService.encrypt(status.batteryLevel),
+        batteryStatus: EncryptionService.encrypt(status.batteryStatus),
 
-        computerName: status.additionalInfo['Computer Name'] ?? '',
-        cpuCores: int.tryParse(status.additionalInfo['CPU Cores'] ?? '0') ?? 0,
-        totalRam: status.additionalInfo['Total RAM'] ?? '',
-        userName: status.additionalInfo['User Name'] ?? '',
+        computerName: EncryptionService.encrypt(status.additionalInfo['Computer Name'] ?? ''),
+        cpuCores: EncryptionService.encryptInt(int.tryParse(status.additionalInfo['CPU Cores'] ?? '0') ?? 0),
+        totalRam: EncryptionService.encrypt(status.additionalInfo['Total RAM'] ?? ''),
+        userName: EncryptionService.encrypt(status.additionalInfo['User Name'] ?? ''),
 
-        osBuild: status.additionalInfo['OS Build'] ?? '',
-        buildNumber: status.additionalInfo['Build Number'] ?? '',
-        kernel: status.additionalInfo['Kernel'] ?? '',
-        platformId: status.additionalInfo['Platform ID'] ?? '',
+        osBuild: EncryptionService.encrypt(status.additionalInfo['OS Build'] ?? ''),
+        buildNumber: EncryptionService.encrypt(status.additionalInfo['Build Number'] ?? ''),
+        kernel: EncryptionService.encrypt(status.additionalInfo['Kernel'] ?? ''),
+        platformId: EncryptionService.encrypt(status.additionalInfo['Platform ID'] ?? ''),
 
-        manufacturer: status.additionalInfo['Manufacturer'] ?? '',
-        model: status.additionalInfo['Model'] ?? '',
+        manufacturer: EncryptionService.encrypt(status.additionalInfo['Manufacturer'] ?? ''),
+        model: EncryptionService.encrypt(status.additionalInfo['Model'] ?? ''),
 
-        camera: status.locationInfo['Camera'] == 'Yes',
-        mic: status.locationInfo['Mic'] == 'Yes',
-        speaker: status.locationInfo['Speaker'] == 'Yes',
+        camera: EncryptionService.encryptBool(status.locationInfo['Camera'] == 'Yes'),
+        mic: EncryptionService.encryptBool(status.locationInfo['Mic'] == 'Yes'),
+        speaker: EncryptionService.encryptBool(status.locationInfo['Speaker'] == 'Yes'),
 
-        city: status.locationInfo['City'] ?? '',
-        region: status.locationInfo['Region'] ?? '',
-        country: status.locationInfo['Country'] ?? '',
+        city: EncryptionService.encrypt(status.locationInfo['City'] ?? ''),
+        region: EncryptionService.encrypt(status.locationInfo['Region'] ?? ''),
+        country: EncryptionService.encrypt(status.locationInfo['Country'] ?? ''),
 
-        longitude: double.tryParse(status.locationInfo['Longitude'] ?? '0') ?? 0,
-        latitude: double.tryParse(status.locationInfo['Latitude'] ?? '0') ?? 0,
+        longitude: EncryptionService.encryptDouble(double.tryParse(status.locationInfo['Longitude'] ?? '0') ?? 0.0),
+        latitude: EncryptionService.encryptDouble(double.tryParse(status.locationInfo['Latitude'] ?? '0') ?? 0.0),
 
-        appUsageData: jsonEncode(status.appData.map((e) => e.toJson()).toList()),
+        appUsageData: EncryptionService.encrypt(jsonEncode(status.appData.map((e) => e.toJson()).toList())),
 
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -81,8 +82,8 @@ class DatabaseService {
 
     await (db.update(db.systemStats)..where((t) => t.id.equals(id))).write(
       SystemStatsCompanion(
-        downloadSpeed: Value(download),
-        uploadSpeed: Value(upload),
+        downloadSpeed: Value(EncryptionService.encryptDouble(download)),
+        uploadSpeed: Value(EncryptionService.encryptDouble(upload)),
         updatedAt: Value(DateTime.now()),
       ),
     );
@@ -94,6 +95,21 @@ class DatabaseService {
     if (last == null) return;
 
     await updateSpeed(last.id, download, upload);
+  }
+
+  Future<void> printSize() async {
+    final db = DatabaseService().db;
+
+    final countExp = db.systemStats.id.count();
+
+    final query = db.selectOnly(db.systemStats)
+      ..addColumns([countExp]);
+
+    final result = await query.getSingle();
+
+    final count = result.read(countExp);
+
+    print("Total rows: $count");
   }
 
 
@@ -109,67 +125,75 @@ class DatabaseService {
       print("No data found");
       return;
     }
-
-    print("===== SYSTEM STATUS =====");
     print("CPU Usage: ${row.cpuUsage}%");
     print("RAM Usage: ${row.ramUsage}%");
-    print("Disk Usage: ${row.diskUsage}%");
+    print("RAM Usage: ${row.diskUsage}%");
 
-    print("CPU: ${row.cpuName}");
-    print("GPU: ${row.gpuName}");
+    print("===== SYSTEM STATUS (DECRYPTED) =====");
+    print("CPU Usage: ${EncryptionService.decrypt(row.cpuUsage)}%");
+    print("RAM Usage: ${EncryptionService.decrypt(row.ramUsage)}%");
+    print("Disk Usage: ${EncryptionService.decrypt(row.diskUsage)}%");
 
-    print("Download: ${row.downloadSpeed} Mbps");
-    print("Upload: ${row.uploadSpeed} Mbps");
+    print("CPU: ${EncryptionService.decrypt(row.cpuName)}");
+    print("GPU: ${EncryptionService.decrypt(row.gpuName)}");
 
-    print("Connected: ${row.isConnected}");
-    print("Temperature: ${row.temperature}");
+    print("Download: ${EncryptionService.decrypt(row.downloadSpeed)} Mbps");
+    print("Upload: ${EncryptionService.decrypt(row.uploadSpeed)} Mbps");
 
-    print("OS: ${row.osName}");
-    print("Device: ${row.deviceName}");
+    print("Connected: ${EncryptionService.decrypt(row.isConnected)}");
+    print("Temperature: ${EncryptionService.decrypt(row.temperature)}");
+
+    print("OS: ${EncryptionService.decrypt(row.osName)}");
+    print("Device: ${EncryptionService.decrypt(row.deviceName)}");
 
     print("===== ADDITIONAL INFO =====");
-    print("Computer Name: ${row.computerName}");
-    print("CPU Cores: ${row.cpuCores}");
-    print("Total RAM: ${row.totalRam}");
-    print("User Name: ${row.userName}");
-    print("OS Build: ${row.osBuild}");
-    print("Build Number: ${row.buildNumber}");
-    print("Kernel: ${row.kernel}");
-    print("Platform ID: ${row.platformId}");
-    print("Manufacturer: ${row.manufacturer}");
-    print("Model: ${row.model}");
+    print("Computer Name: ${EncryptionService.decrypt(row.computerName)}");
+    print("CPU Cores: ${EncryptionService.decrypt(row.cpuCores)}");
+    print("Total RAM: ${EncryptionService.decrypt(row.totalRam)}");
+    print("User Name: ${EncryptionService.decrypt(row.userName)}");
+    print("OS Build: ${EncryptionService.decrypt(row.osBuild)}");
+    print("Build Number: ${EncryptionService.decrypt(row.buildNumber)}");
+    print("Kernel: ${EncryptionService.decrypt(row.kernel)}");
+    print("Platform ID: ${EncryptionService.decrypt(row.platformId)}");
+    print("Manufacturer: ${EncryptionService.decrypt(row.manufacturer)}");
+    print("Model: ${EncryptionService.decrypt(row.model)}");
 
+    print("Battery: ${EncryptionService.decrypt(row.batteryLevel)} (${EncryptionService.decrypt(row.batteryStatus)})");
 
-
-    print("Battery: ${row.batteryLevel} (${row.batteryStatus})");
-
-    print("Location: ${row.city}, ${row.region}, ${row.country}");
-    print("Lat: ${row.latitude}, Lon: ${row.longitude}");
+    print("Location: ${EncryptionService.decrypt(row.city)}, ${EncryptionService.decrypt(row.region)}, ${EncryptionService.decrypt(row.country)}");
+    print("Lat: ${EncryptionService.decrypt(row.latitude)}, Lon: ${EncryptionService.decrypt(row.longitude)}");
 
     print("===== APP USAGE =====");
-    final List<dynamic> appsJson = jsonDecode(row.appUsageData);
-    final apps = appsJson.map((e) => AppUsageData.fromJson(e)).toList();
+    final String decryptedApps = EncryptionService.decrypt(row.appUsageData);
+    if (decryptedApps != "Decryption Error" && decryptedApps.isNotEmpty) {
+      try {
+        final List<dynamic> appsJson = jsonDecode(decryptedApps);
+        final apps = appsJson.map((e) => AppUsageData.fromJson(e)).toList();
 
-    for (var app in apps) {
-      print("App: ${app.name}");
-      print("Usage: ${app.from} → ${app.till}");
-      print("Duration: ${app.duration}");
-      print("-------------------");
+        for (var app in apps) {
+          print("App: ${app.name}");
+          print("Usage: ${app.from} → ${app.till}");
+          print("Duration: ${app.duration}");
+          print("-------------------");
+        }
+      } catch (e) {
+        print("Error decoding app usage JSON: $e");
+      }
+    } else {
+      print("App Usage: [Decryption Error or Data Empty]");
     }
 
     print("Created: ${row.createdAt}");
     print("Updated: ${row.updatedAt}");
   }
 
+  Future<void> printLatestRecordDec() => printLatestRecord();
 
   Future<void> deleteAllSystemStats() async {
     final db = DatabaseService().db;
-
     await db.delete(db.systemStats).go();
-
     print("All system stats deleted");
   }
-
-
-
 }
+
+

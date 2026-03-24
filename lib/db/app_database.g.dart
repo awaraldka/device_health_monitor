@@ -21,21 +21,21 @@ class $SystemStatsTable extends SystemStats
   static const VerificationMeta _cpuUsageMeta =
       const VerificationMeta('cpuUsage');
   @override
-  late final GeneratedColumn<int> cpuUsage = GeneratedColumn<int>(
+  late final GeneratedColumn<String> cpuUsage = GeneratedColumn<String>(
       'cpu_usage', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _ramUsageMeta =
       const VerificationMeta('ramUsage');
   @override
-  late final GeneratedColumn<int> ramUsage = GeneratedColumn<int>(
+  late final GeneratedColumn<String> ramUsage = GeneratedColumn<String>(
       'ram_usage', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _diskUsageMeta =
       const VerificationMeta('diskUsage');
   @override
-  late final GeneratedColumn<int> diskUsage = GeneratedColumn<int>(
+  late final GeneratedColumn<String> diskUsage = GeneratedColumn<String>(
       'disk_usage', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _cpuNameMeta =
       const VerificationMeta('cpuName');
   @override
@@ -51,30 +51,27 @@ class $SystemStatsTable extends SystemStats
   static const VerificationMeta _downloadSpeedMeta =
       const VerificationMeta('downloadSpeed');
   @override
-  late final GeneratedColumn<double> downloadSpeed = GeneratedColumn<double>(
+  late final GeneratedColumn<String> downloadSpeed = GeneratedColumn<String>(
       'download_speed', aliasedName, false,
-      type: DriftSqlType.double, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _uploadSpeedMeta =
       const VerificationMeta('uploadSpeed');
   @override
-  late final GeneratedColumn<double> uploadSpeed = GeneratedColumn<double>(
+  late final GeneratedColumn<String> uploadSpeed = GeneratedColumn<String>(
       'upload_speed', aliasedName, false,
-      type: DriftSqlType.double, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _isConnectedMeta =
       const VerificationMeta('isConnected');
   @override
-  late final GeneratedColumn<bool> isConnected = GeneratedColumn<bool>(
+  late final GeneratedColumn<String> isConnected = GeneratedColumn<String>(
       'is_connected', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      defaultConstraints: GeneratedColumn.constraintIsAlways(
-          'CHECK ("is_connected" IN (0, 1))'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _temperatureMeta =
       const VerificationMeta('temperature');
   @override
-  late final GeneratedColumn<double> temperature = GeneratedColumn<double>(
+  late final GeneratedColumn<String> temperature = GeneratedColumn<String>(
       'temperature', aliasedName, false,
-      type: DriftSqlType.double, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _osNameMeta = const VerificationMeta('osName');
   @override
   late final GeneratedColumn<String> osName = GeneratedColumn<String>(
@@ -107,9 +104,9 @@ class $SystemStatsTable extends SystemStats
   static const VerificationMeta _cpuCoresMeta =
       const VerificationMeta('cpuCores');
   @override
-  late final GeneratedColumn<int> cpuCores = GeneratedColumn<int>(
+  late final GeneratedColumn<String> cpuCores = GeneratedColumn<String>(
       'cpu_cores', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _totalRamMeta =
       const VerificationMeta('totalRam');
   @override
@@ -158,29 +155,20 @@ class $SystemStatsTable extends SystemStats
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _cameraMeta = const VerificationMeta('camera');
   @override
-  late final GeneratedColumn<bool> camera = GeneratedColumn<bool>(
+  late final GeneratedColumn<String> camera = GeneratedColumn<String>(
       'camera', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("camera" IN (0, 1))'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _micMeta = const VerificationMeta('mic');
   @override
-  late final GeneratedColumn<bool> mic = GeneratedColumn<bool>(
+  late final GeneratedColumn<String> mic = GeneratedColumn<String>(
       'mic', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("mic" IN (0, 1))'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _speakerMeta =
       const VerificationMeta('speaker');
   @override
-  late final GeneratedColumn<bool> speaker = GeneratedColumn<bool>(
+  late final GeneratedColumn<String> speaker = GeneratedColumn<String>(
       'speaker', aliasedName, false,
-      type: DriftSqlType.bool,
-      requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('CHECK ("speaker" IN (0, 1))'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _cityMeta = const VerificationMeta('city');
   @override
   late final GeneratedColumn<String> city = GeneratedColumn<String>(
@@ -200,15 +188,15 @@ class $SystemStatsTable extends SystemStats
   static const VerificationMeta _longitudeMeta =
       const VerificationMeta('longitude');
   @override
-  late final GeneratedColumn<double> longitude = GeneratedColumn<double>(
+  late final GeneratedColumn<String> longitude = GeneratedColumn<String>(
       'longitude', aliasedName, false,
-      type: DriftSqlType.double, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _latitudeMeta =
       const VerificationMeta('latitude');
   @override
-  late final GeneratedColumn<double> latitude = GeneratedColumn<double>(
+  late final GeneratedColumn<String> latitude = GeneratedColumn<String>(
       'latitude', aliasedName, false,
-      type: DriftSqlType.double, requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _appUsageDataMeta =
       const VerificationMeta('appUsageData');
   @override
@@ -518,23 +506,23 @@ class $SystemStatsTable extends SystemStats
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       cpuUsage: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}cpu_usage'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}cpu_usage'])!,
       ramUsage: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}ram_usage'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}ram_usage'])!,
       diskUsage: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}disk_usage'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}disk_usage'])!,
       cpuName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}cpu_name'])!,
       gpuName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}gpu_name'])!,
       downloadSpeed: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}download_speed'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}download_speed'])!,
       uploadSpeed: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}upload_speed'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}upload_speed'])!,
       isConnected: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}is_connected'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}is_connected'])!,
       temperature: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}temperature'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}temperature'])!,
       osName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}os_name'])!,
       deviceName: attachedDatabase.typeMapping
@@ -546,7 +534,7 @@ class $SystemStatsTable extends SystemStats
       computerName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}computer_name'])!,
       cpuCores: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}cpu_cores'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}cpu_cores'])!,
       totalRam: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}total_ram'])!,
       userName: attachedDatabase.typeMapping
@@ -564,11 +552,11 @@ class $SystemStatsTable extends SystemStats
       model: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}model'])!,
       camera: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}camera'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}camera'])!,
       mic: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}mic'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}mic'])!,
       speaker: attachedDatabase.typeMapping
-          .read(DriftSqlType.bool, data['${effectivePrefix}speaker'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}speaker'])!,
       city: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}city'])!,
       region: attachedDatabase.typeMapping
@@ -576,9 +564,9 @@ class $SystemStatsTable extends SystemStats
       country: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}country'])!,
       longitude: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}longitude'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}longitude'])!,
       latitude: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}latitude'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}latitude'])!,
       appUsageData: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}app_usage_data'])!,
       createdAt: attachedDatabase.typeMapping
@@ -596,21 +584,21 @@ class $SystemStatsTable extends SystemStats
 
 class SystemStat extends DataClass implements Insertable<SystemStat> {
   final int id;
-  final int cpuUsage;
-  final int ramUsage;
-  final int diskUsage;
+  final String cpuUsage;
+  final String ramUsage;
+  final String diskUsage;
   final String cpuName;
   final String gpuName;
-  final double downloadSpeed;
-  final double uploadSpeed;
-  final bool isConnected;
-  final double temperature;
+  final String downloadSpeed;
+  final String uploadSpeed;
+  final String isConnected;
+  final String temperature;
   final String osName;
   final String deviceName;
   final String batteryLevel;
   final String batteryStatus;
   final String computerName;
-  final int cpuCores;
+  final String cpuCores;
   final String totalRam;
   final String userName;
   final String osBuild;
@@ -619,14 +607,14 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
   final String platformId;
   final String manufacturer;
   final String model;
-  final bool camera;
-  final bool mic;
-  final bool speaker;
+  final String camera;
+  final String mic;
+  final String speaker;
   final String city;
   final String region;
   final String country;
-  final double longitude;
-  final double latitude;
+  final String longitude;
+  final String latitude;
   final String appUsageData;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -670,21 +658,21 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['cpu_usage'] = Variable<int>(cpuUsage);
-    map['ram_usage'] = Variable<int>(ramUsage);
-    map['disk_usage'] = Variable<int>(diskUsage);
+    map['cpu_usage'] = Variable<String>(cpuUsage);
+    map['ram_usage'] = Variable<String>(ramUsage);
+    map['disk_usage'] = Variable<String>(diskUsage);
     map['cpu_name'] = Variable<String>(cpuName);
     map['gpu_name'] = Variable<String>(gpuName);
-    map['download_speed'] = Variable<double>(downloadSpeed);
-    map['upload_speed'] = Variable<double>(uploadSpeed);
-    map['is_connected'] = Variable<bool>(isConnected);
-    map['temperature'] = Variable<double>(temperature);
+    map['download_speed'] = Variable<String>(downloadSpeed);
+    map['upload_speed'] = Variable<String>(uploadSpeed);
+    map['is_connected'] = Variable<String>(isConnected);
+    map['temperature'] = Variable<String>(temperature);
     map['os_name'] = Variable<String>(osName);
     map['device_name'] = Variable<String>(deviceName);
     map['battery_level'] = Variable<String>(batteryLevel);
     map['battery_status'] = Variable<String>(batteryStatus);
     map['computer_name'] = Variable<String>(computerName);
-    map['cpu_cores'] = Variable<int>(cpuCores);
+    map['cpu_cores'] = Variable<String>(cpuCores);
     map['total_ram'] = Variable<String>(totalRam);
     map['user_name'] = Variable<String>(userName);
     map['os_build'] = Variable<String>(osBuild);
@@ -693,14 +681,14 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
     map['platform_id'] = Variable<String>(platformId);
     map['manufacturer'] = Variable<String>(manufacturer);
     map['model'] = Variable<String>(model);
-    map['camera'] = Variable<bool>(camera);
-    map['mic'] = Variable<bool>(mic);
-    map['speaker'] = Variable<bool>(speaker);
+    map['camera'] = Variable<String>(camera);
+    map['mic'] = Variable<String>(mic);
+    map['speaker'] = Variable<String>(speaker);
     map['city'] = Variable<String>(city);
     map['region'] = Variable<String>(region);
     map['country'] = Variable<String>(country);
-    map['longitude'] = Variable<double>(longitude);
-    map['latitude'] = Variable<double>(latitude);
+    map['longitude'] = Variable<String>(longitude);
+    map['latitude'] = Variable<String>(latitude);
     map['app_usage_data'] = Variable<String>(appUsageData);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -752,21 +740,21 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SystemStat(
       id: serializer.fromJson<int>(json['id']),
-      cpuUsage: serializer.fromJson<int>(json['cpuUsage']),
-      ramUsage: serializer.fromJson<int>(json['ramUsage']),
-      diskUsage: serializer.fromJson<int>(json['diskUsage']),
+      cpuUsage: serializer.fromJson<String>(json['cpuUsage']),
+      ramUsage: serializer.fromJson<String>(json['ramUsage']),
+      diskUsage: serializer.fromJson<String>(json['diskUsage']),
       cpuName: serializer.fromJson<String>(json['cpuName']),
       gpuName: serializer.fromJson<String>(json['gpuName']),
-      downloadSpeed: serializer.fromJson<double>(json['downloadSpeed']),
-      uploadSpeed: serializer.fromJson<double>(json['uploadSpeed']),
-      isConnected: serializer.fromJson<bool>(json['isConnected']),
-      temperature: serializer.fromJson<double>(json['temperature']),
+      downloadSpeed: serializer.fromJson<String>(json['downloadSpeed']),
+      uploadSpeed: serializer.fromJson<String>(json['uploadSpeed']),
+      isConnected: serializer.fromJson<String>(json['isConnected']),
+      temperature: serializer.fromJson<String>(json['temperature']),
       osName: serializer.fromJson<String>(json['osName']),
       deviceName: serializer.fromJson<String>(json['deviceName']),
       batteryLevel: serializer.fromJson<String>(json['batteryLevel']),
       batteryStatus: serializer.fromJson<String>(json['batteryStatus']),
       computerName: serializer.fromJson<String>(json['computerName']),
-      cpuCores: serializer.fromJson<int>(json['cpuCores']),
+      cpuCores: serializer.fromJson<String>(json['cpuCores']),
       totalRam: serializer.fromJson<String>(json['totalRam']),
       userName: serializer.fromJson<String>(json['userName']),
       osBuild: serializer.fromJson<String>(json['osBuild']),
@@ -775,14 +763,14 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
       platformId: serializer.fromJson<String>(json['platformId']),
       manufacturer: serializer.fromJson<String>(json['manufacturer']),
       model: serializer.fromJson<String>(json['model']),
-      camera: serializer.fromJson<bool>(json['camera']),
-      mic: serializer.fromJson<bool>(json['mic']),
-      speaker: serializer.fromJson<bool>(json['speaker']),
+      camera: serializer.fromJson<String>(json['camera']),
+      mic: serializer.fromJson<String>(json['mic']),
+      speaker: serializer.fromJson<String>(json['speaker']),
       city: serializer.fromJson<String>(json['city']),
       region: serializer.fromJson<String>(json['region']),
       country: serializer.fromJson<String>(json['country']),
-      longitude: serializer.fromJson<double>(json['longitude']),
-      latitude: serializer.fromJson<double>(json['latitude']),
+      longitude: serializer.fromJson<String>(json['longitude']),
+      latitude: serializer.fromJson<String>(json['latitude']),
       appUsageData: serializer.fromJson<String>(json['appUsageData']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -793,21 +781,21 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'cpuUsage': serializer.toJson<int>(cpuUsage),
-      'ramUsage': serializer.toJson<int>(ramUsage),
-      'diskUsage': serializer.toJson<int>(diskUsage),
+      'cpuUsage': serializer.toJson<String>(cpuUsage),
+      'ramUsage': serializer.toJson<String>(ramUsage),
+      'diskUsage': serializer.toJson<String>(diskUsage),
       'cpuName': serializer.toJson<String>(cpuName),
       'gpuName': serializer.toJson<String>(gpuName),
-      'downloadSpeed': serializer.toJson<double>(downloadSpeed),
-      'uploadSpeed': serializer.toJson<double>(uploadSpeed),
-      'isConnected': serializer.toJson<bool>(isConnected),
-      'temperature': serializer.toJson<double>(temperature),
+      'downloadSpeed': serializer.toJson<String>(downloadSpeed),
+      'uploadSpeed': serializer.toJson<String>(uploadSpeed),
+      'isConnected': serializer.toJson<String>(isConnected),
+      'temperature': serializer.toJson<String>(temperature),
       'osName': serializer.toJson<String>(osName),
       'deviceName': serializer.toJson<String>(deviceName),
       'batteryLevel': serializer.toJson<String>(batteryLevel),
       'batteryStatus': serializer.toJson<String>(batteryStatus),
       'computerName': serializer.toJson<String>(computerName),
-      'cpuCores': serializer.toJson<int>(cpuCores),
+      'cpuCores': serializer.toJson<String>(cpuCores),
       'totalRam': serializer.toJson<String>(totalRam),
       'userName': serializer.toJson<String>(userName),
       'osBuild': serializer.toJson<String>(osBuild),
@@ -816,14 +804,14 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
       'platformId': serializer.toJson<String>(platformId),
       'manufacturer': serializer.toJson<String>(manufacturer),
       'model': serializer.toJson<String>(model),
-      'camera': serializer.toJson<bool>(camera),
-      'mic': serializer.toJson<bool>(mic),
-      'speaker': serializer.toJson<bool>(speaker),
+      'camera': serializer.toJson<String>(camera),
+      'mic': serializer.toJson<String>(mic),
+      'speaker': serializer.toJson<String>(speaker),
       'city': serializer.toJson<String>(city),
       'region': serializer.toJson<String>(region),
       'country': serializer.toJson<String>(country),
-      'longitude': serializer.toJson<double>(longitude),
-      'latitude': serializer.toJson<double>(latitude),
+      'longitude': serializer.toJson<String>(longitude),
+      'latitude': serializer.toJson<String>(latitude),
       'appUsageData': serializer.toJson<String>(appUsageData),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -832,21 +820,21 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
 
   SystemStat copyWith(
           {int? id,
-          int? cpuUsage,
-          int? ramUsage,
-          int? diskUsage,
+          String? cpuUsage,
+          String? ramUsage,
+          String? diskUsage,
           String? cpuName,
           String? gpuName,
-          double? downloadSpeed,
-          double? uploadSpeed,
-          bool? isConnected,
-          double? temperature,
+          String? downloadSpeed,
+          String? uploadSpeed,
+          String? isConnected,
+          String? temperature,
           String? osName,
           String? deviceName,
           String? batteryLevel,
           String? batteryStatus,
           String? computerName,
-          int? cpuCores,
+          String? cpuCores,
           String? totalRam,
           String? userName,
           String? osBuild,
@@ -855,14 +843,14 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
           String? platformId,
           String? manufacturer,
           String? model,
-          bool? camera,
-          bool? mic,
-          bool? speaker,
+          String? camera,
+          String? mic,
+          String? speaker,
           String? city,
           String? region,
           String? country,
-          double? longitude,
-          double? latitude,
+          String? longitude,
+          String? latitude,
           String? appUsageData,
           DateTime? createdAt,
           DateTime? updatedAt}) =>
@@ -1084,21 +1072,21 @@ class SystemStat extends DataClass implements Insertable<SystemStat> {
 
 class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
   final Value<int> id;
-  final Value<int> cpuUsage;
-  final Value<int> ramUsage;
-  final Value<int> diskUsage;
+  final Value<String> cpuUsage;
+  final Value<String> ramUsage;
+  final Value<String> diskUsage;
   final Value<String> cpuName;
   final Value<String> gpuName;
-  final Value<double> downloadSpeed;
-  final Value<double> uploadSpeed;
-  final Value<bool> isConnected;
-  final Value<double> temperature;
+  final Value<String> downloadSpeed;
+  final Value<String> uploadSpeed;
+  final Value<String> isConnected;
+  final Value<String> temperature;
   final Value<String> osName;
   final Value<String> deviceName;
   final Value<String> batteryLevel;
   final Value<String> batteryStatus;
   final Value<String> computerName;
-  final Value<int> cpuCores;
+  final Value<String> cpuCores;
   final Value<String> totalRam;
   final Value<String> userName;
   final Value<String> osBuild;
@@ -1107,14 +1095,14 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
   final Value<String> platformId;
   final Value<String> manufacturer;
   final Value<String> model;
-  final Value<bool> camera;
-  final Value<bool> mic;
-  final Value<bool> speaker;
+  final Value<String> camera;
+  final Value<String> mic;
+  final Value<String> speaker;
   final Value<String> city;
   final Value<String> region;
   final Value<String> country;
-  final Value<double> longitude;
-  final Value<double> latitude;
+  final Value<String> longitude;
+  final Value<String> latitude;
   final Value<String> appUsageData;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -1157,21 +1145,21 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
   });
   SystemStatsCompanion.insert({
     this.id = const Value.absent(),
-    required int cpuUsage,
-    required int ramUsage,
-    required int diskUsage,
+    required String cpuUsage,
+    required String ramUsage,
+    required String diskUsage,
     required String cpuName,
     required String gpuName,
-    required double downloadSpeed,
-    required double uploadSpeed,
-    required bool isConnected,
-    required double temperature,
+    required String downloadSpeed,
+    required String uploadSpeed,
+    required String isConnected,
+    required String temperature,
     required String osName,
     required String deviceName,
     required String batteryLevel,
     required String batteryStatus,
     required String computerName,
-    required int cpuCores,
+    required String cpuCores,
     required String totalRam,
     required String userName,
     required String osBuild,
@@ -1180,14 +1168,14 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
     required String platformId,
     required String manufacturer,
     required String model,
-    required bool camera,
-    required bool mic,
-    required bool speaker,
+    required String camera,
+    required String mic,
+    required String speaker,
     required String city,
     required String region,
     required String country,
-    required double longitude,
-    required double latitude,
+    required String longitude,
+    required String latitude,
     required String appUsageData,
     required DateTime createdAt,
     required DateTime updatedAt,
@@ -1227,21 +1215,21 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
         updatedAt = Value(updatedAt);
   static Insertable<SystemStat> custom({
     Expression<int>? id,
-    Expression<int>? cpuUsage,
-    Expression<int>? ramUsage,
-    Expression<int>? diskUsage,
+    Expression<String>? cpuUsage,
+    Expression<String>? ramUsage,
+    Expression<String>? diskUsage,
     Expression<String>? cpuName,
     Expression<String>? gpuName,
-    Expression<double>? downloadSpeed,
-    Expression<double>? uploadSpeed,
-    Expression<bool>? isConnected,
-    Expression<double>? temperature,
+    Expression<String>? downloadSpeed,
+    Expression<String>? uploadSpeed,
+    Expression<String>? isConnected,
+    Expression<String>? temperature,
     Expression<String>? osName,
     Expression<String>? deviceName,
     Expression<String>? batteryLevel,
     Expression<String>? batteryStatus,
     Expression<String>? computerName,
-    Expression<int>? cpuCores,
+    Expression<String>? cpuCores,
     Expression<String>? totalRam,
     Expression<String>? userName,
     Expression<String>? osBuild,
@@ -1250,14 +1238,14 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
     Expression<String>? platformId,
     Expression<String>? manufacturer,
     Expression<String>? model,
-    Expression<bool>? camera,
-    Expression<bool>? mic,
-    Expression<bool>? speaker,
+    Expression<String>? camera,
+    Expression<String>? mic,
+    Expression<String>? speaker,
     Expression<String>? city,
     Expression<String>? region,
     Expression<String>? country,
-    Expression<double>? longitude,
-    Expression<double>? latitude,
+    Expression<String>? longitude,
+    Expression<String>? latitude,
     Expression<String>? appUsageData,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1303,21 +1291,21 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
 
   SystemStatsCompanion copyWith(
       {Value<int>? id,
-      Value<int>? cpuUsage,
-      Value<int>? ramUsage,
-      Value<int>? diskUsage,
+      Value<String>? cpuUsage,
+      Value<String>? ramUsage,
+      Value<String>? diskUsage,
       Value<String>? cpuName,
       Value<String>? gpuName,
-      Value<double>? downloadSpeed,
-      Value<double>? uploadSpeed,
-      Value<bool>? isConnected,
-      Value<double>? temperature,
+      Value<String>? downloadSpeed,
+      Value<String>? uploadSpeed,
+      Value<String>? isConnected,
+      Value<String>? temperature,
       Value<String>? osName,
       Value<String>? deviceName,
       Value<String>? batteryLevel,
       Value<String>? batteryStatus,
       Value<String>? computerName,
-      Value<int>? cpuCores,
+      Value<String>? cpuCores,
       Value<String>? totalRam,
       Value<String>? userName,
       Value<String>? osBuild,
@@ -1326,14 +1314,14 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
       Value<String>? platformId,
       Value<String>? manufacturer,
       Value<String>? model,
-      Value<bool>? camera,
-      Value<bool>? mic,
-      Value<bool>? speaker,
+      Value<String>? camera,
+      Value<String>? mic,
+      Value<String>? speaker,
       Value<String>? city,
       Value<String>? region,
       Value<String>? country,
-      Value<double>? longitude,
-      Value<double>? latitude,
+      Value<String>? longitude,
+      Value<String>? latitude,
       Value<String>? appUsageData,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt}) {
@@ -1383,13 +1371,13 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
       map['id'] = Variable<int>(id.value);
     }
     if (cpuUsage.present) {
-      map['cpu_usage'] = Variable<int>(cpuUsage.value);
+      map['cpu_usage'] = Variable<String>(cpuUsage.value);
     }
     if (ramUsage.present) {
-      map['ram_usage'] = Variable<int>(ramUsage.value);
+      map['ram_usage'] = Variable<String>(ramUsage.value);
     }
     if (diskUsage.present) {
-      map['disk_usage'] = Variable<int>(diskUsage.value);
+      map['disk_usage'] = Variable<String>(diskUsage.value);
     }
     if (cpuName.present) {
       map['cpu_name'] = Variable<String>(cpuName.value);
@@ -1398,16 +1386,16 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
       map['gpu_name'] = Variable<String>(gpuName.value);
     }
     if (downloadSpeed.present) {
-      map['download_speed'] = Variable<double>(downloadSpeed.value);
+      map['download_speed'] = Variable<String>(downloadSpeed.value);
     }
     if (uploadSpeed.present) {
-      map['upload_speed'] = Variable<double>(uploadSpeed.value);
+      map['upload_speed'] = Variable<String>(uploadSpeed.value);
     }
     if (isConnected.present) {
-      map['is_connected'] = Variable<bool>(isConnected.value);
+      map['is_connected'] = Variable<String>(isConnected.value);
     }
     if (temperature.present) {
-      map['temperature'] = Variable<double>(temperature.value);
+      map['temperature'] = Variable<String>(temperature.value);
     }
     if (osName.present) {
       map['os_name'] = Variable<String>(osName.value);
@@ -1425,7 +1413,7 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
       map['computer_name'] = Variable<String>(computerName.value);
     }
     if (cpuCores.present) {
-      map['cpu_cores'] = Variable<int>(cpuCores.value);
+      map['cpu_cores'] = Variable<String>(cpuCores.value);
     }
     if (totalRam.present) {
       map['total_ram'] = Variable<String>(totalRam.value);
@@ -1452,13 +1440,13 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
       map['model'] = Variable<String>(model.value);
     }
     if (camera.present) {
-      map['camera'] = Variable<bool>(camera.value);
+      map['camera'] = Variable<String>(camera.value);
     }
     if (mic.present) {
-      map['mic'] = Variable<bool>(mic.value);
+      map['mic'] = Variable<String>(mic.value);
     }
     if (speaker.present) {
-      map['speaker'] = Variable<bool>(speaker.value);
+      map['speaker'] = Variable<String>(speaker.value);
     }
     if (city.present) {
       map['city'] = Variable<String>(city.value);
@@ -1470,10 +1458,10 @@ class SystemStatsCompanion extends UpdateCompanion<SystemStat> {
       map['country'] = Variable<String>(country.value);
     }
     if (longitude.present) {
-      map['longitude'] = Variable<double>(longitude.value);
+      map['longitude'] = Variable<String>(longitude.value);
     }
     if (latitude.present) {
-      map['latitude'] = Variable<double>(latitude.value);
+      map['latitude'] = Variable<String>(latitude.value);
     }
     if (appUsageData.present) {
       map['app_usage_data'] = Variable<String>(appUsageData.value);
@@ -1544,21 +1532,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 typedef $$SystemStatsTableCreateCompanionBuilder = SystemStatsCompanion
     Function({
   Value<int> id,
-  required int cpuUsage,
-  required int ramUsage,
-  required int diskUsage,
+  required String cpuUsage,
+  required String ramUsage,
+  required String diskUsage,
   required String cpuName,
   required String gpuName,
-  required double downloadSpeed,
-  required double uploadSpeed,
-  required bool isConnected,
-  required double temperature,
+  required String downloadSpeed,
+  required String uploadSpeed,
+  required String isConnected,
+  required String temperature,
   required String osName,
   required String deviceName,
   required String batteryLevel,
   required String batteryStatus,
   required String computerName,
-  required int cpuCores,
+  required String cpuCores,
   required String totalRam,
   required String userName,
   required String osBuild,
@@ -1567,14 +1555,14 @@ typedef $$SystemStatsTableCreateCompanionBuilder = SystemStatsCompanion
   required String platformId,
   required String manufacturer,
   required String model,
-  required bool camera,
-  required bool mic,
-  required bool speaker,
+  required String camera,
+  required String mic,
+  required String speaker,
   required String city,
   required String region,
   required String country,
-  required double longitude,
-  required double latitude,
+  required String longitude,
+  required String latitude,
   required String appUsageData,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -1582,21 +1570,21 @@ typedef $$SystemStatsTableCreateCompanionBuilder = SystemStatsCompanion
 typedef $$SystemStatsTableUpdateCompanionBuilder = SystemStatsCompanion
     Function({
   Value<int> id,
-  Value<int> cpuUsage,
-  Value<int> ramUsage,
-  Value<int> diskUsage,
+  Value<String> cpuUsage,
+  Value<String> ramUsage,
+  Value<String> diskUsage,
   Value<String> cpuName,
   Value<String> gpuName,
-  Value<double> downloadSpeed,
-  Value<double> uploadSpeed,
-  Value<bool> isConnected,
-  Value<double> temperature,
+  Value<String> downloadSpeed,
+  Value<String> uploadSpeed,
+  Value<String> isConnected,
+  Value<String> temperature,
   Value<String> osName,
   Value<String> deviceName,
   Value<String> batteryLevel,
   Value<String> batteryStatus,
   Value<String> computerName,
-  Value<int> cpuCores,
+  Value<String> cpuCores,
   Value<String> totalRam,
   Value<String> userName,
   Value<String> osBuild,
@@ -1605,14 +1593,14 @@ typedef $$SystemStatsTableUpdateCompanionBuilder = SystemStatsCompanion
   Value<String> platformId,
   Value<String> manufacturer,
   Value<String> model,
-  Value<bool> camera,
-  Value<bool> mic,
-  Value<bool> speaker,
+  Value<String> camera,
+  Value<String> mic,
+  Value<String> speaker,
   Value<String> city,
   Value<String> region,
   Value<String> country,
-  Value<double> longitude,
-  Value<double> latitude,
+  Value<String> longitude,
+  Value<String> latitude,
   Value<String> appUsageData,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -1630,13 +1618,13 @@ class $$SystemStatsTableFilterComposer
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get cpuUsage => $composableBuilder(
+  ColumnFilters<String> get cpuUsage => $composableBuilder(
       column: $table.cpuUsage, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get ramUsage => $composableBuilder(
+  ColumnFilters<String> get ramUsage => $composableBuilder(
       column: $table.ramUsage, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get diskUsage => $composableBuilder(
+  ColumnFilters<String> get diskUsage => $composableBuilder(
       column: $table.diskUsage, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get cpuName => $composableBuilder(
@@ -1645,16 +1633,16 @@ class $$SystemStatsTableFilterComposer
   ColumnFilters<String> get gpuName => $composableBuilder(
       column: $table.gpuName, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get downloadSpeed => $composableBuilder(
+  ColumnFilters<String> get downloadSpeed => $composableBuilder(
       column: $table.downloadSpeed, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get uploadSpeed => $composableBuilder(
+  ColumnFilters<String> get uploadSpeed => $composableBuilder(
       column: $table.uploadSpeed, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get isConnected => $composableBuilder(
+  ColumnFilters<String> get isConnected => $composableBuilder(
       column: $table.isConnected, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get temperature => $composableBuilder(
+  ColumnFilters<String> get temperature => $composableBuilder(
       column: $table.temperature, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get osName => $composableBuilder(
@@ -1672,7 +1660,7 @@ class $$SystemStatsTableFilterComposer
   ColumnFilters<String> get computerName => $composableBuilder(
       column: $table.computerName, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get cpuCores => $composableBuilder(
+  ColumnFilters<String> get cpuCores => $composableBuilder(
       column: $table.cpuCores, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get totalRam => $composableBuilder(
@@ -1699,13 +1687,13 @@ class $$SystemStatsTableFilterComposer
   ColumnFilters<String> get model => $composableBuilder(
       column: $table.model, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get camera => $composableBuilder(
+  ColumnFilters<String> get camera => $composableBuilder(
       column: $table.camera, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get mic => $composableBuilder(
+  ColumnFilters<String> get mic => $composableBuilder(
       column: $table.mic, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<bool> get speaker => $composableBuilder(
+  ColumnFilters<String> get speaker => $composableBuilder(
       column: $table.speaker, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get city => $composableBuilder(
@@ -1717,10 +1705,10 @@ class $$SystemStatsTableFilterComposer
   ColumnFilters<String> get country => $composableBuilder(
       column: $table.country, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get longitude => $composableBuilder(
+  ColumnFilters<String> get longitude => $composableBuilder(
       column: $table.longitude, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get latitude => $composableBuilder(
+  ColumnFilters<String> get latitude => $composableBuilder(
       column: $table.latitude, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get appUsageData => $composableBuilder(
@@ -1745,13 +1733,13 @@ class $$SystemStatsTableOrderingComposer
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get cpuUsage => $composableBuilder(
+  ColumnOrderings<String> get cpuUsage => $composableBuilder(
       column: $table.cpuUsage, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get ramUsage => $composableBuilder(
+  ColumnOrderings<String> get ramUsage => $composableBuilder(
       column: $table.ramUsage, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get diskUsage => $composableBuilder(
+  ColumnOrderings<String> get diskUsage => $composableBuilder(
       column: $table.diskUsage, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get cpuName => $composableBuilder(
@@ -1760,17 +1748,17 @@ class $$SystemStatsTableOrderingComposer
   ColumnOrderings<String> get gpuName => $composableBuilder(
       column: $table.gpuName, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get downloadSpeed => $composableBuilder(
+  ColumnOrderings<String> get downloadSpeed => $composableBuilder(
       column: $table.downloadSpeed,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get uploadSpeed => $composableBuilder(
+  ColumnOrderings<String> get uploadSpeed => $composableBuilder(
       column: $table.uploadSpeed, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get isConnected => $composableBuilder(
+  ColumnOrderings<String> get isConnected => $composableBuilder(
       column: $table.isConnected, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get temperature => $composableBuilder(
+  ColumnOrderings<String> get temperature => $composableBuilder(
       column: $table.temperature, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get osName => $composableBuilder(
@@ -1791,7 +1779,7 @@ class $$SystemStatsTableOrderingComposer
       column: $table.computerName,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get cpuCores => $composableBuilder(
+  ColumnOrderings<String> get cpuCores => $composableBuilder(
       column: $table.cpuCores, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get totalRam => $composableBuilder(
@@ -1819,13 +1807,13 @@ class $$SystemStatsTableOrderingComposer
   ColumnOrderings<String> get model => $composableBuilder(
       column: $table.model, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get camera => $composableBuilder(
+  ColumnOrderings<String> get camera => $composableBuilder(
       column: $table.camera, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get mic => $composableBuilder(
+  ColumnOrderings<String> get mic => $composableBuilder(
       column: $table.mic, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<bool> get speaker => $composableBuilder(
+  ColumnOrderings<String> get speaker => $composableBuilder(
       column: $table.speaker, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get city => $composableBuilder(
@@ -1837,10 +1825,10 @@ class $$SystemStatsTableOrderingComposer
   ColumnOrderings<String> get country => $composableBuilder(
       column: $table.country, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get longitude => $composableBuilder(
+  ColumnOrderings<String> get longitude => $composableBuilder(
       column: $table.longitude, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get latitude => $composableBuilder(
+  ColumnOrderings<String> get latitude => $composableBuilder(
       column: $table.latitude, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get appUsageData => $composableBuilder(
@@ -1866,13 +1854,13 @@ class $$SystemStatsTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<int> get cpuUsage =>
+  GeneratedColumn<String> get cpuUsage =>
       $composableBuilder(column: $table.cpuUsage, builder: (column) => column);
 
-  GeneratedColumn<int> get ramUsage =>
+  GeneratedColumn<String> get ramUsage =>
       $composableBuilder(column: $table.ramUsage, builder: (column) => column);
 
-  GeneratedColumn<int> get diskUsage =>
+  GeneratedColumn<String> get diskUsage =>
       $composableBuilder(column: $table.diskUsage, builder: (column) => column);
 
   GeneratedColumn<String> get cpuName =>
@@ -1881,16 +1869,16 @@ class $$SystemStatsTableAnnotationComposer
   GeneratedColumn<String> get gpuName =>
       $composableBuilder(column: $table.gpuName, builder: (column) => column);
 
-  GeneratedColumn<double> get downloadSpeed => $composableBuilder(
+  GeneratedColumn<String> get downloadSpeed => $composableBuilder(
       column: $table.downloadSpeed, builder: (column) => column);
 
-  GeneratedColumn<double> get uploadSpeed => $composableBuilder(
+  GeneratedColumn<String> get uploadSpeed => $composableBuilder(
       column: $table.uploadSpeed, builder: (column) => column);
 
-  GeneratedColumn<bool> get isConnected => $composableBuilder(
+  GeneratedColumn<String> get isConnected => $composableBuilder(
       column: $table.isConnected, builder: (column) => column);
 
-  GeneratedColumn<double> get temperature => $composableBuilder(
+  GeneratedColumn<String> get temperature => $composableBuilder(
       column: $table.temperature, builder: (column) => column);
 
   GeneratedColumn<String> get osName =>
@@ -1908,7 +1896,7 @@ class $$SystemStatsTableAnnotationComposer
   GeneratedColumn<String> get computerName => $composableBuilder(
       column: $table.computerName, builder: (column) => column);
 
-  GeneratedColumn<int> get cpuCores =>
+  GeneratedColumn<String> get cpuCores =>
       $composableBuilder(column: $table.cpuCores, builder: (column) => column);
 
   GeneratedColumn<String> get totalRam =>
@@ -1935,13 +1923,13 @@ class $$SystemStatsTableAnnotationComposer
   GeneratedColumn<String> get model =>
       $composableBuilder(column: $table.model, builder: (column) => column);
 
-  GeneratedColumn<bool> get camera =>
+  GeneratedColumn<String> get camera =>
       $composableBuilder(column: $table.camera, builder: (column) => column);
 
-  GeneratedColumn<bool> get mic =>
+  GeneratedColumn<String> get mic =>
       $composableBuilder(column: $table.mic, builder: (column) => column);
 
-  GeneratedColumn<bool> get speaker =>
+  GeneratedColumn<String> get speaker =>
       $composableBuilder(column: $table.speaker, builder: (column) => column);
 
   GeneratedColumn<String> get city =>
@@ -1953,10 +1941,10 @@ class $$SystemStatsTableAnnotationComposer
   GeneratedColumn<String> get country =>
       $composableBuilder(column: $table.country, builder: (column) => column);
 
-  GeneratedColumn<double> get longitude =>
+  GeneratedColumn<String> get longitude =>
       $composableBuilder(column: $table.longitude, builder: (column) => column);
 
-  GeneratedColumn<double> get latitude =>
+  GeneratedColumn<String> get latitude =>
       $composableBuilder(column: $table.latitude, builder: (column) => column);
 
   GeneratedColumn<String> get appUsageData => $composableBuilder(
@@ -1993,21 +1981,21 @@ class $$SystemStatsTableTableManager extends RootTableManager<
               $$SystemStatsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            Value<int> cpuUsage = const Value.absent(),
-            Value<int> ramUsage = const Value.absent(),
-            Value<int> diskUsage = const Value.absent(),
+            Value<String> cpuUsage = const Value.absent(),
+            Value<String> ramUsage = const Value.absent(),
+            Value<String> diskUsage = const Value.absent(),
             Value<String> cpuName = const Value.absent(),
             Value<String> gpuName = const Value.absent(),
-            Value<double> downloadSpeed = const Value.absent(),
-            Value<double> uploadSpeed = const Value.absent(),
-            Value<bool> isConnected = const Value.absent(),
-            Value<double> temperature = const Value.absent(),
+            Value<String> downloadSpeed = const Value.absent(),
+            Value<String> uploadSpeed = const Value.absent(),
+            Value<String> isConnected = const Value.absent(),
+            Value<String> temperature = const Value.absent(),
             Value<String> osName = const Value.absent(),
             Value<String> deviceName = const Value.absent(),
             Value<String> batteryLevel = const Value.absent(),
             Value<String> batteryStatus = const Value.absent(),
             Value<String> computerName = const Value.absent(),
-            Value<int> cpuCores = const Value.absent(),
+            Value<String> cpuCores = const Value.absent(),
             Value<String> totalRam = const Value.absent(),
             Value<String> userName = const Value.absent(),
             Value<String> osBuild = const Value.absent(),
@@ -2016,14 +2004,14 @@ class $$SystemStatsTableTableManager extends RootTableManager<
             Value<String> platformId = const Value.absent(),
             Value<String> manufacturer = const Value.absent(),
             Value<String> model = const Value.absent(),
-            Value<bool> camera = const Value.absent(),
-            Value<bool> mic = const Value.absent(),
-            Value<bool> speaker = const Value.absent(),
+            Value<String> camera = const Value.absent(),
+            Value<String> mic = const Value.absent(),
+            Value<String> speaker = const Value.absent(),
             Value<String> city = const Value.absent(),
             Value<String> region = const Value.absent(),
             Value<String> country = const Value.absent(),
-            Value<double> longitude = const Value.absent(),
-            Value<double> latitude = const Value.absent(),
+            Value<String> longitude = const Value.absent(),
+            Value<String> latitude = const Value.absent(),
             Value<String> appUsageData = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -2067,21 +2055,21 @@ class $$SystemStatsTableTableManager extends RootTableManager<
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            required int cpuUsage,
-            required int ramUsage,
-            required int diskUsage,
+            required String cpuUsage,
+            required String ramUsage,
+            required String diskUsage,
             required String cpuName,
             required String gpuName,
-            required double downloadSpeed,
-            required double uploadSpeed,
-            required bool isConnected,
-            required double temperature,
+            required String downloadSpeed,
+            required String uploadSpeed,
+            required String isConnected,
+            required String temperature,
             required String osName,
             required String deviceName,
             required String batteryLevel,
             required String batteryStatus,
             required String computerName,
-            required int cpuCores,
+            required String cpuCores,
             required String totalRam,
             required String userName,
             required String osBuild,
@@ -2090,14 +2078,14 @@ class $$SystemStatsTableTableManager extends RootTableManager<
             required String platformId,
             required String manufacturer,
             required String model,
-            required bool camera,
-            required bool mic,
-            required bool speaker,
+            required String camera,
+            required String mic,
+            required String speaker,
             required String city,
             required String region,
             required String country,
-            required double longitude,
-            required double latitude,
+            required String longitude,
+            required String latitude,
             required String appUsageData,
             required DateTime createdAt,
             required DateTime updatedAt,

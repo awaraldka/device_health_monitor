@@ -32,6 +32,7 @@ dependencies:
   flutter_webrtc: ^0.12.3
   drift: ^2.16.0
   sqlite3_flutter_libs: ^0.5.21
+  encrypt: ^5.0.3
 
 
 dev_dependencies:
