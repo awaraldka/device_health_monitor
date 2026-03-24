@@ -76,6 +76,14 @@ class SystemMonitorService {
     }
   }
 
+  void resetSpeedTest() {
+    if (_cachedStatus != null) {
+      _cachedStatus = _cachedStatus!.copyWith(downloadSpeed: 0, uploadSpeed: 0);
+      _controller.add(_cachedStatus!);
+    }
+    _runSpeedTestsSequentially();
+  }
+
   Stream<SystemStatus> getStatusStream() {
     _init();
 
@@ -93,12 +101,17 @@ class SystemMonitorService {
 
     _fetchAndEmit();
 
+    // Refresh every 30 seconds for non-speed test metrics
     _timer = Timer.periodic(const Duration(hours: 1), (_) {
       _fetchAndEmit();
     });
   }
 
   Future<void> refreshNow() async {
+    // Force reset speeds on manual refresh
+    if (_cachedStatus != null) {
+      _cachedStatus = _cachedStatus!.copyWith(downloadSpeed: 0, uploadSpeed: 0);
+    }
     await _fetchAndEmit();
   }
 

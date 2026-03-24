@@ -88,9 +88,10 @@ class _MonitorDashboardState extends State<MonitorDashboard>
   }
 
   Future<void> _initializeDashboard() async {
-    await _databaseService.deleteAllSystemStats();
+    // await _databaseService.deleteAllSystemStats();
     
     // Start speed test
+    _monitorService.resetSpeedTest();
     startSpeedTest();
 
 
@@ -128,6 +129,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       final now = DateTime.now();
       final elapsed = now.difference(phaseStartTime!);
+
 
       if (phase == SpeedTestPhase.download) {
         if (elapsed >= downloadDuration) {
