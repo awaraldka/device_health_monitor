@@ -1,4 +1,5 @@
 import 'package:camera/camera.dart';
+import 'package:device_health_monitor/services/system_monitor_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -173,6 +174,8 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setBool('isLoggedIn', true);
 
         if (!mounted) return;
+
+        SystemMonitorService().startSession();
 
         Navigator.pushReplacement(
           context,

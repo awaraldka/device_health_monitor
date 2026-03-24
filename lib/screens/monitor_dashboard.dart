@@ -28,16 +28,9 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
   late AnimationController _controller;
   bool _isRefreshing = false;
-  
-  // Session Timer
-  final Stopwatch _sessionStopwatch = Stopwatch();
-  Timer? _sessionTimer;
-  String _formattedSessionTime = '00:00:00';
+
 
   final DatabaseService _databaseService = DatabaseService();
-
-
-
 
   bool _isInitialDataSaved = false;
 
@@ -49,7 +42,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
   double downloadSpeed = 0;
   double uploadSpeed = 0;
-
 
   double? lastDownload;
   double? lastUpload;
@@ -71,31 +63,17 @@ class _MonitorDashboardState extends State<MonitorDashboard>
       duration: const Duration(milliseconds: 800),
     );
 
-    _sessionStopwatch.start();
-    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          final elapsed = _sessionStopwatch.elapsed;
-          final hours = elapsed.inHours.toString().padLeft(2, '0');
-          final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
-          final seconds = elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
-          _formattedSessionTime = '$hours:$minutes:$seconds';
-        });
-      }
-    });
 
     _initializeDashboard();
   }
 
   Future<void> _initializeDashboard() async {
     // await _databaseService.deleteAllSystemStats();
-    
+
     // Start speed test
     _monitorService.resetSpeedTest();
     startSpeedTest();
 
-
-    
     // Wait for first monitor service status to be available
     await Future.delayed(const Duration(seconds: 1));
     final status = _monitorService.cachedStatus;
@@ -114,8 +92,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
   void dispose() {
     _controller.dispose();
     _timer?.cancel();
-    _sessionTimer?.cancel();
-    _sessionStopwatch.stop();
     super.dispose();
   }
 
@@ -129,7 +105,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       final now = DateTime.now();
       final elapsed = now.difference(phaseStartTime!);
-
 
       if (phase == SpeedTestPhase.download) {
         if (elapsed >= downloadDuration) {
@@ -147,12 +122,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
           debugPrint('Average Upload: $avgUpload Mbps');
 
           // Update the database with the final speeds
-           _databaseService.updateLatestSpeed(avgDownload, avgUpload);
-
-
-
-
-
+          _databaseService.updateLatestSpeed(avgDownload, avgUpload);
 
           timer.cancel();
         }
@@ -167,8 +137,8 @@ class _MonitorDashboardState extends State<MonitorDashboard>
       _isRefreshing = true;
       avgDownload = 0;
       avgUpload = 0;
-      downloadSpeed=0;
-      uploadSpeed=0;
+      downloadSpeed = 0;
+      uploadSpeed = 0;
     });
 
     _controller.repeat();
@@ -214,12 +184,22 @@ class _MonitorDashboardState extends State<MonitorDashboard>
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         leadingWidth: 100,
+        leading: IconButton(
+          onPressed: (_isRefreshing || avgDownload == 0 || avgUpload == 0)
+              ? null
+              : () {
+                  Navigator.pop(context);
+                },
+          icon: const Icon(Icons.arrow_back),
+        ),
         title: const Text('Monitoring'),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            onPressed: _isRefreshing ? null : _handleRefresh,
+            onPressed: _isRefreshing || avgDownload == 0 || avgUpload == 0
+                ? null
+                : _handleRefresh,
             icon: RotationTransition(
               turns: _controller,
               child: const Icon(Icons.refresh),
@@ -227,31 +207,29 @@ class _MonitorDashboardState extends State<MonitorDashboard>
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () =>
-                SystemMonitorService().clickLogout(context),
+            onPressed: avgDownload == 0 || avgUpload == 0
+                ? null
+                : () => {
+
+              _monitorService.resetSession(),
+                      SystemMonitorService().clickLogout(context)
+                    },
           ),
         ],
       ),
       body: StreamBuilder<SystemStatus>(
         stream: _monitorService.getStatusStream(),
         builder: (context, snapshot) {
-          final status =
-              snapshot.data ?? _monitorService.cachedStatus;
+          final status = snapshot.data ?? _monitorService.cachedStatus;
 
           if (status == null) {
             return const Center(child: CircularProgressIndicator());
           }
 
-
           if (!_isInitialDataSaved) {
             _isInitialDataSaved = true;
             _databaseService.insertSystemStatus(status);
           }
-
-
-
-
-
 
           /// ✅ Collect samples ONLY (no timing logic here)
           if (phase == SpeedTestPhase.download) {
@@ -266,9 +244,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
           if (phase == SpeedTestPhase.upload) {
             if (status.uploadSpeed > 0 &&
-                (lastUpload == null ||
-                    lastUpload != status.uploadSpeed)) {
-
+                (lastUpload == null || lastUpload != status.uploadSpeed)) {
               uploadSpeed = status.uploadSpeed;
               uploadSamples.add(status.uploadSpeed);
               lastUpload = status.uploadSpeed;
@@ -290,7 +266,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                   /// GRID
                   GridView.count(
                     crossAxisCount:
-                    MediaQuery.of(context).size.width > 1200 ? 5 : 2,
+                        MediaQuery.of(context).size.width > 1200 ? 5 : 2,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 16,
@@ -313,9 +289,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                       ),
                       MetricCard(
                         title: 'Battery',
-                        value: battery > 0
-                            ? status.batteryLevel
-                            : 'Desktop',
+                        value: battery > 0 ? status.batteryLevel : 'Desktop',
                         percentage: battery > 0 ? battery / 100 : 1,
                         icon: Icons.battery_full,
                         color: Colors.green,
@@ -385,7 +359,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     );
   }
 
-
   Widget _buildHeader(SystemStatus status) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -396,9 +369,9 @@ class _MonitorDashboardState extends State<MonitorDashboard>
             Text(
               'System Dashboard',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.indigo.shade900,
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo.shade900,
+                  ),
             ),
             Text(
               'Metrics for ${status.deviceName}',
@@ -406,7 +379,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
             ),
           ],
         ),
-
         Expanded(
           child: Center(
             child: Container(
@@ -421,13 +393,18 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                 children: [
                   const Icon(Icons.timer, color: Colors.indigo, size: 20),
                   const SizedBox(width: 8),
-                  Text(
-                    _monitorService.formattedSessionTime,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.indigo,
-                    ),
+                  ValueListenableBuilder<String>(
+                    valueListenable: _monitorService.formattedSessionTime,
+                    builder: (context, time, _) {
+                      return Text(
+                        time,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.indigo,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -478,7 +455,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
           children: [
             Text(title,
                 style:
-                const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             SizedBox(
               height: 200,
@@ -606,7 +583,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     );
   }
 
-
   Widget _buildAppUsage(SystemStatus status) {
     if (status.appData.isEmpty) {
       return const Text("No App Usage Data");
@@ -625,7 +601,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(height: 24),
-
             ...status.appData.map((app) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -634,7 +609,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
                   children: [
                     const Icon(Icons.apps, color: Colors.indigo, size: 20),
                     const SizedBox(width: 10),
-
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,8 +654,6 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     );
   }
 
-
-
   double calculateAverage(List<double> samples) {
     if (samples.isEmpty) {
       return 0;
@@ -690,11 +662,4 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     final avg = sum / samples.length;
     return avg;
   }
-
-
-
 }
-
-
-
-

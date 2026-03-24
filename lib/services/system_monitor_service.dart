@@ -23,16 +23,7 @@ class SystemMonitorService {
 
   factory SystemMonitorService() => _instance;
 
-  SystemMonitorService._internal() {
-    _sessionStopwatch.start();
-    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      final elapsed = _sessionStopwatch.elapsed;
-      final hours = elapsed.inHours.toString().padLeft(2, '0');
-      final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
-      final seconds = elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
-      _formattedSessionTime = '$hours:$minutes:$seconds';
-    });
-  }
+  SystemMonitorService._internal();
 
   final monitor = MonitorFactory.create();
 
@@ -46,10 +37,9 @@ class SystemMonitorService {
   Timer? _timer;
 
   // Session Timer
-  final Stopwatch _sessionStopwatch = Stopwatch();
-  Timer? _sessionTimer;
-  String _formattedSessionTime = '00:00:00';
-  String get formattedSessionTime => _formattedSessionTime;
+  final Stopwatch sessionStopwatch = Stopwatch();
+  Timer? sessionTimer;
+  final ValueNotifier<String> formattedSessionTime = ValueNotifier<String>('00:00:00');
 
   bool _isSpeedTestRunning = false;
 
@@ -74,6 +64,33 @@ class SystemMonitorService {
     } finally {
       _isSpeedTestRunning = false;
     }
+  }
+
+  void startSession() {
+    sessionStopwatch.reset();
+    sessionStopwatch.start();
+
+    sessionTimer?.cancel();
+    sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateFormattedTime();
+    });
+  }
+
+  void _updateFormattedTime() {
+    final elapsed = sessionStopwatch.elapsed;
+    final hours = elapsed.inHours.toString().padLeft(2, '0');
+    final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
+
+    formattedSessionTime.value = '$hours:$minutes:$seconds';
+  }
+
+  void resetSession() {
+    sessionTimer?.cancel();
+    sessionStopwatch.stop();
+    sessionStopwatch.reset();
+
+    formattedSessionTime.value = '00:00:00';
   }
 
   void resetSpeedTest() {
@@ -214,6 +231,7 @@ class SystemMonitorService {
   }
 
   Future<void> clickLogout(BuildContext context) async {
+    resetSession();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
     await prefs.setBool('isHardwareVerified', false);

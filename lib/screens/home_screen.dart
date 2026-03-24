@@ -23,6 +23,22 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
         actions: [
+          Center(
+            child: ValueListenableBuilder<String>(
+              valueListenable: _monitorService.formattedSessionTime,
+              builder: (context, time, _) {
+                return Text(
+                  time,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => SystemMonitorService().clickLogout(context),
