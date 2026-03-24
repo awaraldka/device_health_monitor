@@ -95,6 +95,7 @@ class DatabaseService {
     if (last == null) return;
 
     await updateSpeed(last.id, download, upload);
+    await printLatestRecord();
   }
 
   Future<void> printSize() async {

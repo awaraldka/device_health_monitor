@@ -23,7 +23,16 @@ class SystemMonitorService {
 
   factory SystemMonitorService() => _instance;
 
-  SystemMonitorService._internal();
+  SystemMonitorService._internal() {
+    _sessionStopwatch.start();
+    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final elapsed = _sessionStopwatch.elapsed;
+      final hours = elapsed.inHours.toString().padLeft(2, '0');
+      final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
+      final seconds = elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
+      _formattedSessionTime = '$hours:$minutes:$seconds';
+    });
+  }
 
   final monitor = MonitorFactory.create();
 
@@ -35,6 +44,12 @@ class SystemMonitorService {
   SystemStatus? get cachedStatus => _cachedStatus;
 
   Timer? _timer;
+
+  // Session Timer
+  final Stopwatch _sessionStopwatch = Stopwatch();
+  Timer? _sessionTimer;
+  String _formattedSessionTime = '00:00:00';
+  String get formattedSessionTime => _formattedSessionTime;
 
   bool _isSpeedTestRunning = false;
 
@@ -78,7 +93,6 @@ class SystemMonitorService {
 
     _fetchAndEmit();
 
-    // ✅ Fix: Changed from 1 hour to 3 seconds for real-time history and dashboard updates
     _timer = Timer.periodic(const Duration(hours: 1), (_) {
       _fetchAndEmit();
     });

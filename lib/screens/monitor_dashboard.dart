@@ -88,7 +88,7 @@ class _MonitorDashboardState extends State<MonitorDashboard>
   }
 
   Future<void> _initializeDashboard() async {
-    // await _databaseService.deleteAllSystemStats();
+    await _databaseService.deleteAllSystemStats();
     
     // Start speed test
     startSpeedTest();
@@ -146,6 +146,9 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
           // Update the database with the final speeds
            _databaseService.updateLatestSpeed(avgDownload, avgUpload);
+
+
+
 
 
 
@@ -402,6 +405,33 @@ class _MonitorDashboardState extends State<MonitorDashboard>
           ],
         ),
 
+        Expanded(
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.indigo.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.indigo.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.timer, color: Colors.indigo, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    _monitorService.formattedSessionTime,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
