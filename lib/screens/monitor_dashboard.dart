@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:device_health_monitor/services/database_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -27,6 +28,13 @@ class _MonitorDashboardState extends State<MonitorDashboard>
 
   late AnimationController _controller;
   bool _isRefreshing = false;
+
+  final DatabaseService _databaseService = DatabaseService();
+
+
+
+
+  bool _isInitialDataSaved = false;
 
   List<double> downloadSamples = [];
   List<double> uploadSamples = [];
@@ -58,7 +66,10 @@ class _MonitorDashboardState extends State<MonitorDashboard>
       duration: const Duration(milliseconds: 800),
     );
 
+    // _databaseService.deleteAllSystemStats();
+
     startSpeedTest();
+    _databaseService.printLatestRecord();
   }
 
   @override
@@ -97,6 +108,11 @@ class _MonitorDashboardState extends State<MonitorDashboard>
           debugPrint('Average Download: $avgDownload Mbps');
           debugPrint('Average Upload: $avgUpload Mbps');
 
+          // Update the database with the final speeds
+           _databaseService.updateLatestSpeed(avgDownload, avgUpload);
+
+
+
           timer.cancel();
         }
       }
@@ -127,6 +143,12 @@ class _MonitorDashboardState extends State<MonitorDashboard>
     startSpeedTest();
 
     await _monitorService.refreshNow();
+
+    // Save data after refresh
+    final status = _monitorService.cachedStatus;
+    if (status != null) {
+      await _databaseService.insertSystemStatus(status);
+    }
 
     _controller.stop();
     _controller.reset();
@@ -177,6 +199,13 @@ class _MonitorDashboardState extends State<MonitorDashboard>
           if (status == null) {
             return const Center(child: CircularProgressIndicator());
           }
+
+
+          if (!_isInitialDataSaved) {
+            _isInitialDataSaved = true;
+            _databaseService.insertSystemStatus(status);
+          }
+
 
 
 

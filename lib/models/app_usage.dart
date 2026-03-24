@@ -13,6 +13,20 @@ class AppUsageData {
     required this.duration,
   });
 
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'from': from,
+        'till': till,
+        'duration': duration,
+      };
+
+  factory AppUsageData.fromJson(Map<String, dynamic> json) => AppUsageData(
+        name: json['name'] ?? '',
+        from: json['from'] ?? '',
+        till: json['till'] ?? '',
+        duration: json['duration'] ?? '',
+      );
+
   factory AppUsageData.fromMap(Map<String, dynamic> map) {
     final fromRaw = map['From']?['DateTime'];
     final tillRaw = map['Till']?['DateTime'];
